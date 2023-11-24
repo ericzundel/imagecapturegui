@@ -1,0 +1,2 @@
+pysimplegui
+#json # distributed with Python
