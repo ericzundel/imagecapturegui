@@ -38,7 +38,7 @@ def build_window(list_values):
 def get_selected_value(value_list):
     """Retrieve the selected value as a scalar, not a one item list"""
     if (value_list is None):
-        raise new Exception("Whoops, something went wrong in retrieving value from event")
+        raise Exception("Whoops, something went wrong in retrieving value from event")
     
     return value_list[0]
 
