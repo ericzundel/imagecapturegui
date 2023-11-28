@@ -10,10 +10,12 @@ a database for a segment of machine learning.
 - A workstation will be setup at the entrance to the classroom.
 - As students will enter the classroom each day, they will choose their name from the drop down list
 - The program will then capture a series of images of their face.
+- Files will be written to a directory named 'images' with the
+  first and last name concatenated together
 
 ### Database of student names
 
-The database of student names is stored in JSON format in qa file named 'face_chioces.json' in the same directory with the script.  Here is an example of the file:
+The database of student names is stored in JSON format in a file named 'face_chioces.json' in the same directory with the script.  Here is an example of the file:
 
 ```
 [

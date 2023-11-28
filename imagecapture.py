@@ -1,7 +1,9 @@
 # See PySimpleGui/Demo_Listbox_Search_Filter.py
 #
-import PySimpleGUI as sg
 import json
+import os
+import PySimpleGUI as sg
+
 
 face_choices_file_path = 'face_choices.json'
 
@@ -43,6 +45,14 @@ def get_selected_value(value_list):
         raise Exception("Whoops, something went wrong in retrieving value from event")
     
     return value_list[0]
+
+def capture_images(choice):
+    directory = os.path.join("images", "%s%s" % (choice['first_name'], choice['last_name']))
+    print("Capturing images for %s in dir %s" % (format_choice(choice), directory))
+    ###
+    ### *EDIT*
+    ### Call OpenCV to capture from the camera
+    ###
 
 ####################################################################
 # Setup the User Interface
@@ -94,13 +104,9 @@ while True:
         else:
             # Now we can get the original object back from the json file
             choice = choice_list[0]
-            print("Found choice ", choice)
-            ###
-            ### *EDIT*
-            ### In place of the next line you can call OpenCV 
-            ### to capture from the camera
-            ###
-            sg.popup('Selected ', format_choice(choice))
+            ####
+            sg.popup('Get ready to smile %s!' % (format_choice(choice)))
+            capture_images(choice)
             # After the line above completes, the loop will continue.
             
 window.close()
