@@ -8,7 +8,9 @@ face_choices_file_path = 'face_choices.json'
 def format_choice(choice_elem):
     """ Format one element of the JSON array for display.
 
-    We'll just use the first_name and last_name fields in the json array
+    Concatenate the first_name and last_name fields in the json array.
+    This means that each entry in the JSON file must have a unique
+    first name/last name combination.
     """
     return "%s %s" % (choice_elem['first_name'], choice_elem['last_name'])
 
@@ -28,17 +30,17 @@ def read_face_choices():
 
 def build_window(list_values):
     """Builds the user interface and pops it up on the screen"""
-    layout = [[sg.Text('Listbox with search')],
+    layout = [[sg.Text('Select a name to capture images')],
           [sg.Input(size=(20, 1), enable_events=True, key='-INPUT-')],
           [sg.Listbox(list_values, size=(20, 4), enable_events=True, key='-LIST-')],
-          [sg.Button('Chrome'), sg.Button('Exit')]]
+          [sg.Button('Exit')]]
 
-    return sg.Window('Listbox with Search', layout)
+    return sg.Window('Face Image Capture', layout)
 
 def get_selected_value(value_list):
     """Retrieve the selected value as a scalar, not a one item list"""
     if (value_list is None):
-        raise new Exception("Whoops, something went wrong in retrieving value from event")
+        raise Exception("Whoops, something went wrong in retrieving value from event")
     
     return value_list[0]
 
@@ -99,5 +101,6 @@ while True:
             ### to capture from the camera
             ###
             sg.popup('Selected ', format_choice(choice))
+            # After the line above completes, the loop will continue.
             
 window.close()
