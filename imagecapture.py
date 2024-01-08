@@ -47,7 +47,7 @@ def build_window(list_values):
     """Builds the user interface and pops it up on the screen"""
     layout = [[sg.Text('Select a name to capture images')],
           [sg.Input(size=(20, 1), enable_events=True, key='-INPUT-')],
-          [sg.Listbox(list_values, size=(20, 4), enable_events=True, key='-LIST-')],
+          [sg.Listbox(list_values, size=(20, 30), enable_events=True, key='-LIST-')],
           [sg.Button('Exit')]]
 
     return sg.Window('Face Image Capture', layout)
@@ -104,7 +104,7 @@ def capture_images(choice):
 face_choices = read_face_choices()
 
 # Format the names in the file for display in a listbox
-names = [format_choice(elem) for elem in face_choices]
+names = sorted([format_choice(elem) for elem in face_choices])
 print("List of names found in JSON file is:", names)
 
 # Create and display the main UI
