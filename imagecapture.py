@@ -2,10 +2,23 @@
 #
 import json
 import os
+import time
+from datetime import datetime
+
+import cv2 as cv
+import numpy as np
 import PySimpleGUI as sg
 
-
 face_choices_file_path = 'face_choices.json'
+rootfolder = "."
+NUM_IMAGES_TO_CAPTURE = 3
+
+
+####################################################################
+# Setup OpenCV for reading from the camera
+#
+camera = cv.VideoCapture(0)
+
 
 def format_choice(choice_elem):
     """ Format one element of the JSON array for display.
@@ -50,11 +63,40 @@ def capture_images(choice):
     directory = os.path.join("images", "%s%s" % (choice['first_name'], choice['last_name']))
     print("Capturing images for %s in dir %s" % (format_choice(choice), directory))
     ###
-    ### *EDIT*
     ### Call OpenCV to capture from the camera
     ###
+    if not os.path.exists(directory):
+        os.mkdir(directory)
 
-####################################################################
+    count = 0
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    while count < NUM_IMAGES_TO_CAPTURE:
+        #read returns two values one is the exit code and other is the frame
+        status, frame = camera.read()
+        #check if we get the frame or not
+        if not status:
+            print("Frame is not been captured. Exiting...")
+            raise Exception("Frame not captured")
+        
+        #convert the image into gray format for fast caculation
+        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        #display window with gray image
+        cv.imshow("Video Window",gray)
+        #resizing the image to store it
+        gray = cv.resize(gray, (200,200))
+        #Store the image to specific label folder
+        filename = '%s/img%s-%d.png' % (directory, timestamp, count)
+        cv.imwrite(filename, gray)
+        count=count+1
+        print("Wrote %s" % (filename))
+        if (count < NUM_IMAGES_TO_CAPTURE):
+            print("Wait to take another image...")
+            sg.popup("Captured %d of %d images. Click OK to take another image." % (count, NUM_IMAGES_TO_CAPTURE))
+        cv.destroyAllWindows()
+
+
+    
+############################-########################################
 # Setup the User Interface
 #
 
@@ -67,6 +109,7 @@ print("List of names found in JSON file is:", names)
 
 # Create and display the main UI
 window = build_window(names)
+
 
 ############################################################################
 # UI Event Loop
@@ -108,5 +151,10 @@ while True:
             sg.popup('Get ready to smile %s!' % (format_choice(choice)))
             capture_images(choice)
             # After the line above completes, the loop will continue.
+
             
 window.close()
+
+# When everything done, release the capture
+camera.release()
+
