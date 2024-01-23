@@ -13,6 +13,7 @@ from gpiozero import DistanceSensor
 face_choices_file_path = 'face_choices.json'
 rootfolder = "."
 NUM_IMAGES_TO_CAPTURE = 3
+DISTANCE_THRESHOLD = .9
 ultrasonic_sensor = DistanceSensor(echo=17, trigger=4)
 
 ####################################################################
@@ -60,7 +61,7 @@ def get_selected_value(value_list):
     
     return value_list[0]
 
-def capture_images(choice):
+def capture_and_save_images(choice):
     directory = os.path.join("images", "%s%s" % (choice['first_name'], choice['last_name']))
     print("Capturing images for %s in dir %s" % (format_choice(choice), directory))
     ###
@@ -95,10 +96,52 @@ def capture_images(choice):
             sg.popup("Captured %d of %d images. Click OK to take another image." % (count, NUM_IMAGES_TO_CAPTURE))
         cv.destroyAllWindows()
 
+def capture_images():
+    """Captures and saves Images to disk, returns an array of pathnames
+
+    Returns: Array of paths to images
+    """
+    images=[]
+    directory = os.path.join("images", 'UNNAMED')
+    print("Capturing images in dir %s" % (directory))
+    ###
+    ### Call OpenCV to capture from the camera
+    ###
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+
+    count = 0
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    while count < NUM_IMAGES_TO_CAPTURE:
+        #read returns two values one is the exit code and other is the frame
+        status, frame = camera.read()
+        #check if we get the frame or not
+        if not status:
+            print("Frame is not been captured. Exiting...")
+            raise Exception("Frame not captured")
+        
+        #convert the image into gray format for fast caculation
+        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        #display window with gray image
+        cv.imshow("Video Window",gray)
+        #resizing the image to store it
+        gray = cv.resize(gray, (200,200))
+        #Store the image to specific label folder
+        filename = '%s/img%s-%d.png' % (directory, timestamp, count)
+        cv.imwrite(filename, gray)
+        count=count+1
+        print("Wrote %s" % (filename))
+        images.append(filename)
+        if (count < NUM_IMAGES_TO_CAPTURE):
+            print("Wait to take another image...")
+            time.sleep(.25)
+        cv.destroyAllWindows()
+    return images
+
 def check_distance_sensor():
     distance = ultrasonic_sensor.distance
-    if (distance < .5):
-        print("Distance is %f" % (distance))
+    print("Distance is %f" % (distance))
+    if (distance < DISTANCE_THRESHOLD):        
         return True
     return False
     
@@ -126,12 +169,16 @@ while True:
     start_ns = time.monotonic_ns()
 
     # Check for a trigger about every 50 milliseconds
-    event, values = window.read(timeout=50)
+    event, values = window.read(timeout=10)
     elapsed_ms = (time.monotonic_ns() - start_ns) / 1000000
-    if (elapsed_ms > 10):
+    #if (elapsed_ms > 5):
+    if True:
+        print("Elapsed ms=%d" % (elapsed_ms))
         presence = check_distance_sensor()
         if presence:
-            sg.popup('Tripped! %f' % (ultrasonic_sensor.distance))
+            image_files = capture_images()
+            sg.popup('Tripped! %f\nSaved to %s' % (ultrasonic_sensor.distance, "\n".join(image_files)))
+            
 
     # Every time something happens in the UI, it returns an event.
     # By decoding this event you can figure out what happened and take
@@ -163,7 +210,7 @@ while True:
             choice = choice_list[0]
             ####
             sg.popup('Get ready to smile %s!' % (format_choice(choice)))
-            capture_images(choice)
+            capture_and_save_images(choice)
             # After the line above completes, the loop will continue.
 
             
