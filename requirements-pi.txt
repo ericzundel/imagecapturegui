@@ -1,0 +1,11 @@
+# For raspberry pi binary install a compatible version
+numpy==1.24 
+# something more recent might also work
+
+# For raspberry pi
+opencv-python==4.6.0.66
+#opencv-python==4.7.0.72 might also work
+
+pysimplegui
+
+gpiozero
