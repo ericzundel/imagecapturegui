@@ -1,4 +1,11 @@
 numpy
+# For raspberry pi binary install
+# numpy==1.24 
+
 opencv-python
+# For raspberry pi
+#opencv-python==4.5.3.56 # too old
+#opencv-python==4.6.0.66
+#opencv-python==4.7.0.72 might also work
+
 pysimplegui
-#json # distributed with Python
