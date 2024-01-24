@@ -1,5 +1,6 @@
 """Code to read from the echo sensor and capture an image"""
 
+from threading import Thread, Lock
 import time
 
 try:
@@ -23,6 +24,7 @@ HYSTERESIS_SECS = .25  # Time to wait after a positive distance result
 MAX_OVER_THRESHOLD = int(NUM_SAMPLES - (NUM_SAMPLES * CERTAINTY_THRESHOLD))
 print("Max over threshold is %d" % (MAX_OVER_THRESHOLD))
 
+
 ##########################
 # Setup the Ultrasonic sensor pins
 GPIO.setmode(GPIO.BCM)
@@ -32,6 +34,9 @@ GPIO.setup(TRIGGER_PIN, GPIO.OUT, initial=GPIO.LOW)
 # Setup Echo pin
 GPIO.setup(ECHO_PIN, GPIO.IN)
 
+# Setup concurrency variables
+SENSOR_LOCK = Lock()
+SENSOR_TRIGGERED = False  # Protected by sensor_lock
 
 def read_distance():
     distances = []
@@ -82,13 +87,28 @@ def read_one_sample():
     # 1/1000000 s/us * 340 m/s * 100 cm/m * 2 = 0.017
     return pulselen * 0.017
 
+def read_sensor_thread():
+    global SENSOR_TRIGGERED
+
+    while True:
+        start_time = time.time()
+        distance = read_distance()
+        elapsed = start_time - time.time()
+        if distance < MAX_DISTANCE:
+            print("Distance: %02f. Elapsed time to read sensor: %f seconds" %
+                  (distance, elapsed))
+            with SENSOR_LOCK:
+                SENSOR_TRIGGERED = True
+            time.sleep(HYSTERESIS_SECS)
+        time.sleep(0.01)
+
+
+t = Thread(target=read_sensor_thread)
+t.run()
 
 while True:
-    start_time = time.time()
-    distance = read_distance()
-    elapsed = start_time - time.time()
-    if distance < MAX_DISTANCE:
-        print("Distance: %02f. Elapsed time to read sensor: %f seconds" %
-              (distance, elapsed))
-        time.sleep(HYSTERESIS_SECS)
-    time.sleep(0.01)
+    time.sleep(.5)
+    with SENSOR_LOCK:
+        if SENSOR_TRIGGERED:
+            print("Main thread got trigger")
+            SENSOR_TRIGGERED = False
