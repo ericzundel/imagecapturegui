@@ -13,10 +13,15 @@ except RuntimeError:
 ECHO_PIN = 17
 TRIGGER_PIN = 4
 ECHO_TIMEOUT = 0.25  # Wait at most 250 MS for echo response
-DISTANCE_THRESHOLD = 100
-NUM_SAMPLES = 4
-CERTAINTY_THRESHOLD = .75
+DISTANCE_THRESHOLD = 100  # Detect objects closer than 100cm / 1m
+NUM_SAMPLES = 4  # Check the sensor 4 times for consecutive readings
+CERTAINTY_THRESHOLD = .75  # % samples positive to report a positive result.
 MAX_DISTANCE = 1000  # Sentinel value for something not detected
+HYSTERESIS_SECS = .25  # Time to wait after a positive distance result
+
+# Computed constant from variables above
+MAX_OVER_THRESHOLD = int(NUM_SAMPLES - (NUM_SAMPLES * CERTAINTY_THRESHOLD))
+print("Max over threshold is %d" % (MAX_OVER_THRESHOLD))
 
 ##########################
 # Setup the Ultrasonic sensor pins
@@ -31,7 +36,6 @@ GPIO.setup(ECHO_PIN, GPIO.IN)
 def read_distance():
     distances = []
     num_over_threshold = 0
-    max_over_threshold = NUM_SAMPLES - (NUM_SAMPLES * CERTAINTY_THRESHOLD)
 
     # Make sure there are consecutive samples  that are below the threshold
     for i in range(NUM_SAMPLES):
@@ -40,10 +44,11 @@ def read_distance():
         # Short circuit the loop
         if distance > DISTANCE_THRESHOLD:
             num_over_threshold = num_over_threshold + 1
-            if num_over_threshold > max_over_threshold:
-                return MAX_DISTANCE
-            else:
-                distances.append(distance)
+        else:
+            distances.append(distance)
+
+        if num_over_threshold > MAX_OVER_THRESHOLD:
+            return MAX_DISTANCE
 
     return sum(distances) / len(distances)
 
@@ -82,6 +87,8 @@ while True:
     start_time = time.time()
     distance = read_distance()
     elapsed = start_time - time.time()
-    print("Distance: %02f. Elapsed time to read sensor: %f seconds" %
-          (distance, elapsed))
-    time.sleep(0.25)
+    if distance < MAX_DISTANCE:
+        print("Distance: %02f. Elapsed time to read sensor: %f seconds" %
+              (distance, elapsed))
+        time.sleep(HYSTERESIS_SECS)
+    time.sleep(0.01)
