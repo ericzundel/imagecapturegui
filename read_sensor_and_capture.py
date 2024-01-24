@@ -48,13 +48,13 @@ def read_one_sample():
     pulselen = None
     timestamp = time.monotonic()
 
-    while GPIO.INPUT(ECHO_PIN) == GPIO.LOW:
+    while GPIO.input(ECHO_PIN) == GPIO.LOW:
         if time.monotonic() - timestamp > ECHO_TIMEOUT:
             raise RuntimeError("Timed out")
-    timestamp = time.monotonic()
+        timestamp = time.monotonic()
 
     # track how long pin is high
-    while GPIO.INPUT(ECHO_PIN) == GPIO.HIGH:
+    while GPIO.input(ECHO_PIN) == GPIO.HIGH:
         if time.monotonic() - timestamp > ECHO_TIMEOUT:
             raise RuntimeError("Timed out")
     pulselen = time.monotonic() - timestamp
@@ -70,6 +70,7 @@ def read_one_sample():
 while True:
     start_time = time.time()
     distance = read_distance()
-    elapsed = start_time - time.time
-    print("Elapsed time to read sensor: %f seconds" % (elapsed))
+    elapsed = start_time - time.time()
+    print("Distance: %02f. Elapsed time to read sensor: %f seconds" %
+          (distance, elapsed))
     time.sleep(0.25)
