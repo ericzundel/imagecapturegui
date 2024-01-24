@@ -14,13 +14,12 @@ face_choices_file_path = "face_choices.json"
 rootfolder = "."
 NUM_IMAGES_TO_CAPTURE = 3
 DISTANCE_THRESHOLD = 0.9
-proximity_sensor = ProximitySensor(echo_pin=17, trigger_pin=4)
+proximity_sensor = ProximitySensor(echo_pin=17, trigger_pin=4, debug=True)
 
 ####################################################################
 # Setup OpenCV for reading from the camera
 #
 camera = cv.VideoCapture(0)
-
 
 def format_choice(choice_elem):
     """Format one element of the JSON array for display.
@@ -30,7 +29,6 @@ def format_choice(choice_elem):
     first name/last name combination.
     """
     return "%s %s" % (choice_elem["first_name"], choice_elem["last_name"])
-
 
 def read_face_choices():
     """Read the JSON file and process it, checking for errors"""
@@ -68,48 +66,6 @@ def get_selected_value(value_list):
 
     return value_list[0]
 
-
-def capture_and_save_images(choice):
-    directory = os.path.join(
-        "images", "%s%s" % (choice["first_name"], choice["last_name"])
-    )
-    print("Capturing images for %s in dir %s" % (format_choice(choice), directory))
-    #
-    # Call OpenCV to capture from the camera
-    #
-    if not os.path.exists(directory):
-        os.mkdir(directory)
-
-    count = 0
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    while count < NUM_IMAGES_TO_CAPTURE:
-        # Read returns two values one is the exit code and other is the frame
-        status, frame = camera.read()
-        # Check if we get the frame or not
-        if not status:
-            print("Frame is not been captured. Exiting...")
-            raise Exception("Frame not captured")
-
-        # Convert the image into gray format for fast caculation
-        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        # Display window with gray image
-        cv.imshow("Video Window", gray)
-        # Resizing the image to store it
-        gray = cv.resize(gray, (200, 200))
-        # Store the image to specific label folder
-        filename = "%s/img%s-%d.png" % (directory, timestamp, count)
-        cv.imwrite(filename, gray)
-        count = count + 1
-        print("Wrote %s" % (filename))
-        if count < NUM_IMAGES_TO_CAPTURE:
-            print("Wait to take another image...")
-            sg.popup(
-                "Captured %d of %d images. Click OK to take another image."
-                % (count, NUM_IMAGES_TO_CAPTURE)
-            )
-        cv.destroyAllWindows()
-
-
 def capture_images():
     """Captures and saves Images to disk, returns an array of pathnames
 
@@ -134,23 +90,14 @@ def capture_images():
         if not status:
             print("Frame is not been captured. Exiting...")
             raise Exception("Frame not captured")
-
-        # Convert the image into gray format for fast caculation
-        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        # Display window with gray image
-        cv.imshow("Video Window", gray)
-        # Resizing the image to store it
-        gray = cv.resize(gray, (200, 200))
-        # Store the image to specific label folder
         filename = "%s/img%s-%d.png" % (directory, timestamp, count)
-        cv.imwrite(filename, gray)
+        cv.imwrite(filename, frame)
         count = count + 1
         print("Wrote %s" % (filename))
         images.append(filename)
         if count < NUM_IMAGES_TO_CAPTURE:
             print("Wait to take another image...")
             time.sleep(0.25)
-        cv.destroyAllWindows()
     return images
 
 
@@ -222,8 +169,8 @@ while True:
             # Now we can get the original object back from the json file
             choice = choice_list[0]
             ####
-            sg.popup("Get ready to smile %s!" % (format_choice(choice)))
-            capture_and_save_images(choice)
+            #sg.popup("Get ready to smile %s!" % (format_choice(choice)))
+            #capture_and_save_images(choice)
             # After the line above completes, the loop will continue.
 
 

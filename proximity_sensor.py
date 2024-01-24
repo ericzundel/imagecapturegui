@@ -102,17 +102,17 @@ class ProximitySensor:
 
         while GPIO.input(self._echo_pin) == GPIO.LOW:
             if time.monotonic() - timestamp > ECHO_TIMEOUT:
-                raise RuntimeError("Timed out")
+                raise TimeoutError("Timed out")
             timestamp = time.monotonic()
 
         # track how long pin is high
         while GPIO.input(self._echo_pin) == GPIO.HIGH:
             if time.monotonic() - timestamp > ECHO_TIMEOUT:
-                raise RuntimeError("Timed out")
+                raise TimeoutError("Timed out")
         pulselen = time.monotonic() - timestamp
         pulselen *= 1000000  # convert to us to match pulseio
         if pulselen >= 65535:
-            raise RuntimeError("Timed out")
+            raise TimeoutError("Timed out")
         # positive pulse time, in seconds, times 340 meters/sec, then
         # divided by 2 gives meters. Multiply by 100 for cm
         # 1/1000000 s/us * 340 m/s * 100 cm/m * 2 = 0.017
@@ -125,7 +125,12 @@ class ProximitySensor:
             print("ProximitySensor: Thread started", flush=True)
         while True:
             start_time = time.time()
-            distance = self._read_distance()
+            
+            try:
+                distance = self._read_distance()
+            except TimeoutError:
+                pass
+            
             with self._sensor_lock:
                 self._distance = distance
             elapsed = time.time() - start_time
@@ -168,3 +173,7 @@ class ProximitySensor:
         with self._sensor_lock:
             result = self._triggered_distance
         return result
+    
+    class TimeoutError(RuntimeError):
+        def __init__(self, message):
+            super().__init__(self, message)
