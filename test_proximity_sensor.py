@@ -3,7 +3,9 @@
 import proximity_sensor
 import time
 
-sensor = proximity_sensor.ProximitySensor()
+sensor = proximity_sensor.ProximitySensor(debug=True)
+
+print("Main thread waiting")
 
 while True:
     time.sleep(1)

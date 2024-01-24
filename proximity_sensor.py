@@ -11,10 +11,16 @@ except RuntimeError:
         "This is probably because you need superuser privileges.  ",
         "You can achieve this by using 'sudo' to run your script",
     )
-ECHO_PIN = 17
-TRIGGER_PIN = 4
+DEFAULT_ECHO_PIN = 17
+DEFAULT_TRIGGER_PIN = 4
+
+# SENSE_WAIT_TIME: Controls how frequently the sensor is checked.
+# With a value of .05 this task takes 25% of the CPU on a RPI3+
+# With a value of .1 it takes as little as 12% of the CPU on a RPI3+
+SENSE_WAIT_TIME = 0.1  # seconds between checking the sensor
+
 ECHO_TIMEOUT = 0.25  # Wait at most 250 MS for echo response
-DISTANCE_THRESHOLD = 100  # Detect objects closer than 100cm / 1m
+DEFAULT_DISTANCE_THRESHOLD = 100  # Detect objects closer than 100cm / 1m
 NUM_SAMPLES = 4  # Check the sensor 4 times for consecutive readings
 CERTAINTY_THRESHOLD = .75  # % samples positive to report a positive result.
 MAX_DISTANCE = 1000  # Sentinel value for something not detected
@@ -22,21 +28,29 @@ HYSTERESIS_SECS = .25  # Time to wait after a positive distance result
 
 # Computed constant from variables above
 MAX_OVER_THRESHOLD = int(NUM_SAMPLES - (NUM_SAMPLES * CERTAINTY_THRESHOLD))
-print("Max over threshold is %d" % (MAX_OVER_THRESHOLD))
+
 
 class ProximitySensor:
     """Class that uses a HC-SR04 sensor on a Raspberry Pi to detect"""
-    def __init__(self):
+    def __init__(self, echo_pin=DEFAULT_ECHO_PIN,
+                 trigger_pin=DEFAULT_TRIGGER_PIN,
+                 distance_threshold=DEFAULT_DISTANCE_THRESHOLD,
+                 debug=False):
         """Start reading from the HC-SR04 sensor in the background"""
 
         ##########################
         # Setup the Ultrasonic sensor pins
         GPIO.setmode(GPIO.BCM)
 
+        self._trigger_pin = trigger_pin
+        self._echo_pin = echo_pin
+        self._distance_threshold = distance_threshold
+        self._debug = debug
+        
         # Setup Trigger pin
-        GPIO.setup(TRIGGER_PIN, GPIO.OUT, initial=GPIO.LOW)
+        GPIO.setup(self._trigger_pin, GPIO.OUT, initial=GPIO.LOW)
         # Setup Echo pin
-        GPIO.setup(ECHO_PIN, GPIO.IN)
+        GPIO.setup(self._echo_pin, GPIO.IN)
 
         # Setup concurrency variables
         self._sensor_lock = Lock()
@@ -44,9 +58,17 @@ class ProximitySensor:
         self._distance = MAX_DISTANCE   # Protected by sensor_lock
         self._triggered_distance = 0    # Protected by sensor_lock
 
+        if self._debug:
+            print("ProximitySensor: Trigger pin is %d" % (self._trigger_pin))
+            print("ProximitySensor: Echo pin is %d" % (self._echo_pin))
+            print("ProximitySensor: Distance Threshold is %d" % (self._distance_threshold))
+            print("ProximitySensor: Max over threshold is %d" % (MAX_OVER_THRESHOLD))
+            print("ProximitySensor: Max Distance %d" % (MAX_DISTANCE), flush=True)
+            
         # Start a background thread
-        self._thread = Thread(target=self._read_sensor_thread, args=[self])
+        self._thread = Thread(target=self._read_sensor_thread, args=[])
         self._thread.start()
+        
 
     def _read_distance(self):
         distances = []
@@ -57,7 +79,7 @@ class ProximitySensor:
             distance = self._read_one_sample()
 
             # Short circuit the loop
-            if distance > DISTANCE_THRESHOLD:
+            if distance > self._distance_threshold:
                 num_over_threshold = num_over_threshold + 1
             else:
                 distances.append(distance)
@@ -72,19 +94,19 @@ class ProximitySensor:
 
         Usually takes about 20ms
         """
-        GPIO.output(TRIGGER_PIN, GPIO.HIGH)  # Set trig high
+        GPIO.output(self._trigger_pin, GPIO.HIGH)  # Set trig high
         time.sleep(0.00001)  # 10 micro seconds 10/1000/1000
-        GPIO.output(TRIGGER_PIN, GPIO.LOW)  # Set trig low
+        GPIO.output(self._trigger_pin, GPIO.LOW)  # Set trig low
         pulselen = None
         timestamp = time.monotonic()
 
-        while GPIO.input(ECHO_PIN) == GPIO.LOW:
+        while GPIO.input(self._echo_pin) == GPIO.LOW:
             if time.monotonic() - timestamp > ECHO_TIMEOUT:
                 raise RuntimeError("Timed out")
             timestamp = time.monotonic()
 
         # track how long pin is high
-        while GPIO.input(ECHO_PIN) == GPIO.HIGH:
+        while GPIO.input(self._echo_pin) == GPIO.HIGH:
             if time.monotonic() - timestamp > ECHO_TIMEOUT:
                 raise RuntimeError("Timed out")
         pulselen = time.monotonic() - timestamp
@@ -99,27 +121,32 @@ class ProximitySensor:
     def _read_sensor_thread(self):
         global SENSOR_TRIGGERED
 
+        if (self._debug):
+            print("ProximitySensor: Thread started", flush=True)
         while True:
             start_time = time.time()
             distance = self._read_distance()
             with self._sensor_lock:
                 self._distance = distance
-            elapsed = start_time - time.time()
+            elapsed = time.time() - start_time
             if distance < MAX_DISTANCE:
-                print("Distance: %02f. Elapsed time to read sensor: %f seconds" %
-                      (distance, elapsed))
+                if self._debug:
+                    print(" ProximitySensor: Distance: %02f. Elapsed time to read sensor: %f seconds" %
+                          (distance, elapsed), flush=True)
                 with self._sensor_lock:
-                    SENSOR_TRIGGERED = True
+                    self._sensor_triggered = True
                     self._triggered_distance = distance
                 time.sleep(HYSTERESIS_SECS)
-            time.sleep(0.01)
+            time.sleep(SENSE_WAIT_TIME)
 
     def is_triggered(self):
         """Returns True if the sensor triggered since this method was called"""
+        result = False
         with self._sensor_lock:
             if self._sensor_triggered:
-                print("Main thread got trigger")
+                result = True
                 self._sensor_triggered = False
+        return result
 
     def distance(self):
         """Returns the latest distance from the last reading of the sensor.
