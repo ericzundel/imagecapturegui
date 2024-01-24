@@ -55,15 +55,15 @@ def build_window(list_values):
             [sg.Image(size=(5, 5), key="-IMAGE0-", expand_x=True, expand_y=True)],
             [sg.Image(size=(5, 5), key="-IMAGE1-", expand_x=True, expand_y=True)],
             [sg.Image(size=(5, 5), key="-IMAGE2-", expand_x=True, expand_y=True)],
-    ], key="-LEFT_COLUMN-", expand_x=True, expand_y=True)
+        ], key="-LEFT_COLUMN-", expand_x=True, expand_y=True)
     right_column = sg.Column([
             [sg.Listbox(list_values, size=(20, 30), enable_events=True,
                         key="-LIST-")],
             [sg.Button("Cancel",  key="-CANCEL-")],
-    ], key='-RIGHT_COLUMN-', visible=False, expand_x=True, expand_y=True)
+        ], key='-RIGHT_COLUMN-', visible=False, expand_x=True, expand_y=True)
     layout = [
         [left_column, right_column],
-    ]
+        ]
     window = sg.Window("Face Image Capture", layout, finalize=True)
     return window
 
