@@ -104,10 +104,9 @@ def read_sensor_thread():
 
 
 t = Thread(target=read_sensor_thread)
-t.run()
+t.start()
 
 while True:
-    time.sleep(.5)
     with SENSOR_LOCK:
         if SENSOR_TRIGGERED:
             print("Main thread got trigger")
