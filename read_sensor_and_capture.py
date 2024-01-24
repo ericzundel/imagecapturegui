@@ -14,7 +14,9 @@ ECHO_PIN = 17
 TRIGGER_PIN = 4
 ECHO_TIMEOUT = 0.25  # Wait at most 250 MS for echo response
 DISTANCE_THRESHOLD = 100
-NUM_SAMPLES = 3
+NUM_SAMPLES = 4
+CERTAINTY_THRESHOLD = .75
+MAX_DISTANCE = 1000  # Sentinel value for something not detected
 
 ##########################
 # Setup the Ultrasonic sensor pins
@@ -28,12 +30,21 @@ GPIO.setup(ECHO_PIN, GPIO.IN)
 
 def read_distance():
     distances = []
-    # make sure there are consecutive samples  that are below the threshold
+    num_over_threshold = 0
+    max_over_threshold = NUM_SAMPLES - (NUM_SAMPLES * CERTAINTY_THRESHOLD)
+
+    # Make sure there are consecutive samples  that are below the threshold
     for i in range(NUM_SAMPLES):
         distance = read_one_sample()
+
+        # Short circuit the loop
         if distance > DISTANCE_THRESHOLD:
-            return 1000
-        distances.append(distance)
+            num_over_threshold = num_over_threshold + 1
+            if num_over_threshold > max_over_threshold:
+                return MAX_DISTANCE
+            else:
+                distances.append(distance)
+
     return sum(distances) / len(distances)
 
 
