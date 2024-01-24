@@ -50,19 +50,17 @@ def read_face_choices():
 def build_window(list_values):
     """Builds the user interface and pops it up on the screen"""
     left_column = sg.Column([
-            [sg.Text(size=(20, 1), text="WAITING", key="-STATUS-")],
-            [sg.Image(size=(5, 5), key="-IMAGE0-")],
-            [sg.Image(size=(5, 5), key="-IMAGE1-")],
-            [sg.Image(size=(5, 5), key="-IMAGE2-")],
+            [sg.Text(size=(18, 1), text="WAITING", key="-STATUS-")],
             [sg.Button("Manual Capture", key="-CAPTURE-")],
-            ])
+            [sg.Image(size=(5, 5), key="-IMAGE0-", expand_x=True, expand_y=True)],
+            [sg.Image(size=(5, 5), key="-IMAGE1-", expand_x=True, expand_y=True)],
+            [sg.Image(size=(5, 5), key="-IMAGE2-", expand_x=True, expand_y=True)],
+    ], key="-LEFT_COLUMN-", expand_x=True, expand_y=True)
     right_column = sg.Column([
-            [sg.Text("Names")],
-            [sg.Input(size=(20, 1), enable_events=True, key="-INPUT-")],
             [sg.Listbox(list_values, size=(20, 30), enable_events=True,
                         key="-LIST-")],
-            [sg.Button("Exit")],
-    ], key='-RIGHT_COLUMN-', visible=False)
+            [sg.Button("Cancel",  key="-CANCEL-")],
+    ], key='-RIGHT_COLUMN-', visible=False, expand_x=True, expand_y=True)
     layout = [
         [left_column, right_column],
     ]
@@ -82,17 +80,17 @@ def set_ui_state(window, state):
         # Hide images and right column
         # Show manual capture button
         window["-STATUS-"].update("Waiting to Capture")
-        window["-RIGHT_COLUMN-"].update(visible=False)
         window["-CAPTURE-"].update(visible=True)
         for i in range(3):
-            window["-IMAGE%d-" % i].update(data=None, visible=False)
+            window["-IMAGE%d-" % i].update(size=(0, 0), data=None, visible=False)
+        window["-RIGHT_COLUMN-"].update(visible=False)
 
     elif (state == 'CAPTURING'):
         # Hide Manual capture button
         window["-STATUS-"].update("Choose a Label")
         window["-CAPTURE-"].update(visible=False)
         for i in range(3):
-            window["-IMAGE%d-" % i].update(data=None, visible=False)
+            window["-IMAGE%d-" % i].update(size=(0, 0), data=None, visible=False)
 
     elif (state == 'NAMING'):
         # Turn on the right column
@@ -108,7 +106,6 @@ def get_selected_value(value_list):
     """Retrieve the selected value as a scalar, not a one item list"""
     if value_list is None:
         raise Exception("Whoops, something went wrong in retrieving value from event")
-
     return value_list[0]
 
 
@@ -215,16 +212,9 @@ while True:
     if event in (sg.WIN_CLOSED, "Exit"):  # always check for closed window
         break
 
-    # Someone entered date in the search field
-    if values["-INPUT-"] != "":
-        search = values["-INPUT-"]
-        new_values = [x for x in names if search in x]  # do the filtering
-        window["-LIST-"].update(new_values)  # display in the listbox
-
-    # The search field has been cleared.
-    else:
-        # display original unfiltered list
-        window["-LIST-"].update(names)
+    if event == "-CANCEL-":
+        last_captured_images = []
+        set_ui_state(window, 'WAITING')
 
     if event == "-CAPTURE-":
         set_ui_state(window, 'CAPTURING')
