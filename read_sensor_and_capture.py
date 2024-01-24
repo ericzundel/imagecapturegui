@@ -13,7 +13,8 @@ except RuntimeError:
 ECHO_PIN = 17
 TRIGGER_PIN = 4
 ECHO_TIMEOUT = 0.25  # Wait at most 250 MS for echo response
-
+DISTANCE_THRESHOLD = 100
+NUM_SAMPLES = 3
 
 ##########################
 # Setup the Ultrasonic sensor pins
@@ -26,7 +27,21 @@ GPIO.setup(ECHO_PIN, GPIO.IN)
 
 
 def read_distance():
-    """Blocks while reading from the Ultrasonic sensor"""
+    distances = []
+    # make sure there are consecutive samples  that are below the threshold
+    for i in range(NUM_SAMPLES):
+        distance = read_one_sample()
+        if distance > DISTANCE_THRESHOLD:
+            return 1000
+        distances.append[distance]
+    return sum(distances) / len(distances)
+
+
+def read_one_sample():
+    """Blocks while reading from the Ultrasonic sensor.
+
+    Usually takes about 20ms
+    """
     GPIO.output(TRIGGER_PIN, GPIO.HIGH)  # Set trig high
     time.sleep(0.00001)  # 10 micro seconds 10/1000/1000
     GPIO.output(TRIGGER_PIN, GPIO.LOW)  # Set trig low
@@ -50,6 +65,7 @@ def read_distance():
     # divided by 2 gives meters. Multiply by 100 for cm
     # 1/1000000 s/us * 340 m/s * 100 cm/m * 2 = 0.017
     return pulselen * 0.017
+
 
 while True:
     start_time = time.time()
