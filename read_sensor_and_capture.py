@@ -33,7 +33,7 @@ def read_distance():
         distance = read_one_sample()
         if distance > DISTANCE_THRESHOLD:
             return 1000
-        distances.append[distance]
+        distances.append(distance)
     return sum(distances) / len(distances)
 
 
