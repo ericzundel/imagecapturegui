@@ -1,15 +1,15 @@
 # imagecapturegui - A user interface example for a listbox of names
 
 ## Summary
-This project is intended to be a starting point to develop a UI for a
+This project is a UI for a
 classroom project that captures images using OpenCV that will be used as
 a database for a segment of machine learning.
 
 ## Details
 
-- A workstation will be setup at the entrance to the classroom.
+- A workstation/Raspberry Pi will be setup at the entrance to the classroom.
+- A sensor (or a UI button) will trigger capturing images from the camera.
 - As students will enter the classroom each day, they will choose their name from the drop down list
-- The program will then capture a series of images of their face.
 - Files will be written to a directory named 'images' with the
   first and last name concatenated together
 
@@ -44,6 +44,18 @@ Note that the JSON interpreter is quite strict.
 
 Currently, only the tags "first_name" and "last_name" are used, but other values could be entered and used by the program.
 
-## Running the code
+## Ultrasonic sensor
+
+The sensor is a widely available HC-SR04 ultrasonic sensor. It is wired up to pins on the Raspberry Pi
+with the echo pin being wired with 2 resistors to create a voltage divider so we don't send 5V signals 
+to the Raspberry Pi GPIO.
+
+The sensor is controlled by a custom library that spawns a thread to read the sensor in a loop.
+See proximity_sensor.py.  I'm not sure that the Raspberry Pi has real threading, but it seems to be 
+OKish. In general, the sensor is not as responsive as I'd like but seems to be working. 
+
+## Running the Code
 
 Libraries to install are in requirements.txt.  You can install them with `pip -r requirements.txt`
+
+After installing libraries, running `python imagacapture.py` should start the GUI
