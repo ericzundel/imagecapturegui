@@ -57,6 +57,7 @@ class ProximitySensor:
         self._sensor_triggered = False  # Protected by sensor_lock
         self._distance = MAX_DISTANCE   # Protected by sensor_lock
         self._triggered_distance = 0    # Protected by sensor_lock
+        self._stop_now = False          # Protected by sensor_lock
 
         if self._debug:
             print("ProximitySensor: Trigger pin is %d" % (self._trigger_pin))
@@ -68,7 +69,6 @@ class ProximitySensor:
         # Start a background thread
         self._thread = Thread(target=self._read_sensor_thread, args=[])
         self._thread.start()
-        
 
     def _read_distance(self):
         distances = []
@@ -123,8 +123,14 @@ class ProximitySensor:
 
         if (self._debug):
             print("ProximitySensor: Thread started", flush=True)
+            
         while True:
             start_time = time.time()
+            
+            # Check to see if the thread should exit
+            with self._sensor_lock:
+                if self._stop_now:
+                    return
             
             try:
                 distance = self._read_distance()
@@ -173,7 +179,12 @@ class ProximitySensor:
         with self._sensor_lock:
             result = self._triggered_distance
         return result
-    
+
+    def deinit(self):
+        with self._sensor_lock:
+            self._stop_now = True
+        self._thread.join()
+        
     class TimeoutError(RuntimeError):
         def __init__(self, message):
             super().__init__(self, message)
