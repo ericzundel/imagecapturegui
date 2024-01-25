@@ -8,18 +8,23 @@ from datetime import datetime
 import cv2 as cv
 import PySimpleGUI as sg
 
-
-
 face_choices_file_path = "face_choices.json"
 rootfolder = "."
 NUM_IMAGES_TO_CAPTURE = 3
-DISPLAY_IMAGE_WIDTH = 150
-DISPLAY_IMAGE_HEIGHT = 150
+DISPLAY_IMAGE_WIDTH = 130
+DISPLAY_IMAGE_HEIGHT = 130
 
+# The GUI won't snap another picture unless this timer expires
+WAIT_FOR_NAMING_SECS = 15  
+
+####################################################################
+# Setup the Ultrasonic Sensor as a proximity sensor
+# (Requires extra hardware - only works on Raspberry Pi)
+#
 try:
     from proximity_sensor import ProximitySensor
     proximity_sensor = ProximitySensor(echo_pin=17, trigger_pin=4, debug=True)
-except Error:
+except BaseException:
     # It's OK, probably not running on Raspberry Pi
     proximity_sensor = None
     
@@ -27,6 +32,9 @@ except Error:
 # Setup OpenCV for reading from the camera
 #
 camera = cv.VideoCapture(0)
+
+####################################################################
+# GUI Setup
 
 def format_choice(choice_elem):
     """Format one element of the JSON array for display.
@@ -36,7 +44,6 @@ def format_choice(choice_elem):
     first name/last name combination.
     """
     return "%s %s" % (choice_elem["first_name"], choice_elem["last_name"])
-
 
 def read_face_choices():
     """Read the JSON file and process it, checking for errors"""
@@ -53,16 +60,21 @@ def read_face_choices():
         # Now, loaded_dict contains the dictionary from the file
         # print(face_choices)
         return face_choices
-
+    
+def pin_image(val):
+    """ Wrap the Image in a sg.pin element to make it small when invisible"""
+    # https://stackoverflow.com/questions/72970201
+    return sg.pin(sg.Image(size=(5, 5), key="-IMAGE%d-" % val,
+                    expand_x=True, expand_y=True))
 
 def build_window(list_values):
     """Builds the user interface and pops it up on the screen"""
     left_column = sg.Column([
             [sg.Text(size=(18, 1), text="WAITING", key="-STATUS-")],
             [sg.Button("Manual Capture", key="-CAPTURE-")],
-            [sg.Image(size=(5, 5), key="-IMAGE0-", expand_x=True, expand_y=True)],
-            [sg.Image(size=(5, 5), key="-IMAGE1-", expand_x=True, expand_y=True)],
-            [sg.Image(size=(5, 5), key="-IMAGE2-", expand_x=True, expand_y=True)],
+            [pin_image(0)],
+            [pin_image(1)],
+            [pin_image(2)]
         ], key="-LEFT_COLUMN-", expand_x=True, expand_y=True)
     right_column = sg.Column([
             [sg.Listbox(list_values, size=(20, 30), enable_events=True,
@@ -75,48 +87,9 @@ def build_window(list_values):
     window = sg.Window("Face Image Capture", layout, finalize=True)
     return window
 
-
-def set_ui_state(window, state):
-    """Set the UI into a specified state.
-
-    state: one of ['WAITING', 'CAPTURING', 'NAMING']
-
-    Returns: None
-    """
-
-    if (state == 'WAITING'):
-        # Hide images and right column
-        # Show manual capture button
-        window["-STATUS-"].update("Waiting to Capture")
-        window["-CAPTURE-"].update(visible=True)
-        for i in range(3):
-            window["-IMAGE%d-" % i].update(size=(0, 0), data=None, visible=False)
-        window["-RIGHT_COLUMN-"].update(visible=False)
-
-    elif (state == 'CAPTURING'):
-        # Hide Manual capture button
-        window["-STATUS-"].update("Choose a Label")
-        window["-CAPTURE-"].update(visible=False)
-        for i in range(3):
-            window["-IMAGE%d-" % i].update(size=(0, 0), data=None, visible=False)
-
-    elif (state == 'NAMING'):
-        # Turn on the right column
-        window["-STATUS-"].update("Choose a Label")
-        window["-RIGHT_COLUMN-"].update(visible=True)
-        window["-CAPTURE-"].update(visible=False)
-        for i in range(3):
-            window["-IMAGE%d-" % i].update(data=None, visible=True)
-    else:
-        raise RuntimeError("Invalid state %s" % state)
-
-def get_selected_value(value_list):
-    """Retrieve the selected value as a scalar, not a one item list"""
-    if value_list is None:
-        raise Exception("Whoops, something went wrong in retrieving value from event")
-    return value_list[0]
-
-
+##########################################################################
+# Image handling
+# 
 def save_images(images, choice):
     """Given an array of CV2 Images and a choice, save to PNG files"""
     directory = os.path.join(
@@ -139,7 +112,6 @@ def save_images(images, choice):
         # Store the image to specific label folder
         filename = "%s/img%s-%d.png" % (directory, timestamp, count)
         cv.imwrite(filename, gray)
-        count = count + 1
         print("Wrote %s" % (filename))
         count = count + 1
 
@@ -174,6 +146,51 @@ def capture_images():
     cv.destroyAllWindows()
     return images
 
+#############################################################
+# GUI Runtime actions
+#
+def set_ui_state(window, state):
+    """Set the UI into a specified state.
+
+    state: one of ['WAITING', 'CAPTURING', 'NAMING']
+
+    Returns: None
+    """
+
+    if (state == 'WAITING'):
+        # Hide images and right column
+        # Show manual capture button
+        window["-STATUS-"].update("Waiting to Capture")
+        window["-CAPTURE-"].update(visible=True)
+        for i in range(3):
+            window["-IMAGE%d-" % i].update(size=(0, 0), data=None, visible=False)
+        window["-RIGHT_COLUMN-"].update(visible=False)
+        window["-LEFT_COLUMN-"].expand(True, True)
+
+    elif (state == 'CAPTURING'):
+        # Hide Manual capture button
+        window["-STATUS-"].update("Choose a Label")
+        window["-CAPTURE-"].update(visible=False)
+        for i in range(3):
+            window["-IMAGE%d-" % i].update(size=(0, 0), data=None, visible=False)
+
+    elif (state == 'NAMING'):
+        # Turn on the right column
+        window["-STATUS-"].update("Choose a Label")
+        window["-RIGHT_COLUMN-"].update(visible=True)
+        window["-CAPTURE-"].update(visible=False)
+        for i in range(3):
+            window["-IMAGE%d-" % i].update(data=None, visible=True)
+    else:
+        raise RuntimeError("Invalid state %s" % state)
+
+def get_selected_value(value_list):
+    """Retrieve the selected value as a scalar, not a one item list"""
+    if value_list is None:
+        raise Exception("Whoops, something went wrong in retrieving value from event")
+    return value_list[0]
+
+
 def display_image_in_ui(image, ui_key):
     # Resize the image to fit
     resized = cv.resize(image, (DISPLAY_IMAGE_WIDTH, DISPLAY_IMAGE_HEIGHT))
@@ -181,13 +198,17 @@ def display_image_in_ui(image, ui_key):
     window[ui_key].update(data=img_bytes)
 
 def do_capture_images():
-    window["-STATUS-"].update("Capturing")
+    set_ui_state(window, 'CAPTURING')
+    
     images = capture_images()
     for i in range(len(images)):
         display_image_in_ui(images[i], "-IMAGE%d-" % i)
+        
+    window["-STATUS-"].update('NAMING')
+    
     return images
 
-def check_distance_sensor():
+def check_proximity_sensor():
     triggered = False
     if proximity_sensor != None:
         triggered = proximity_sensor.is_triggered()
@@ -208,7 +229,11 @@ print("List of names found in JSON file is:", names)
 # Create and display the main UI
 window = build_window(names)
 set_ui_state(window, 'WAITING')
+
+# Keep this variable to remember the last set of images captured
+# from the camera.  Clear this variable after saving them to disk.
 last_captured_images = []
+last_captured_image_time = 0
 
 # ###########################################################################
 # UI Event Loop
@@ -219,13 +244,7 @@ while True:
 
     # Check for a trigger about every 10 milliseconds
     event, values = window.read(timeout=10)
-    presence = check_distance_sensor()
-
-    if presence:
-        set_ui_state(window, 'CAPTURING')
-        last_captured_images = do_capture_images()
-        set_ui_state(window, 'NAMING')
-        
+    
     # Every time something happens in the UI, it returns an event.
     # By decoding this event you can figure out what happened and take
     # an action.
@@ -236,10 +255,18 @@ while True:
         last_captured_images = []
         set_ui_state(window, 'WAITING')
 
-    if event == "-CAPTURE-":
-        set_ui_state(window, 'CAPTURING')
-        last_captured_images = do_capture_images()
-        set_ui_state(window, 'NAMING')
+    # Check to see if we are to capture new images by checking the
+    # proximity sensor hardware or if the button was pressed
+    if check_proximity_sensor() or event == "-CAPTURE-":
+        if (event != "-CAPTURE-"
+            and last_captured_images != []
+            and (time.monotonic() - last_captured_image_time) < WAIT_FOR_NAMING_SECS):
+            print("Waiting for timeout before automatically capturing more images")
+        else:
+            set_ui_state(window, 'CAPTURING')
+            last_captured_images = do_capture_images()
+            last_captured_image_time = time.monotonic()        
+            set_ui_state(window, 'NAMING')
 
     # if a list item is clicked on, the following code gest triggered
     if event == "-LIST-" and len(values["-LIST-"]):
