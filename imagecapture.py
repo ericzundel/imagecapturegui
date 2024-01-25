@@ -45,6 +45,9 @@ except BaseException:
 #
 camera = cv.VideoCapture(0)
 
+# Important: Turn off the buffer on the camera. Otherwise, you get stale images
+camera.set(cv.CAP_PROP_BUFFERSIZE, 1)
+
 ####################################################################
 # GUI Setup
 
@@ -148,6 +151,11 @@ def capture_images():
     """
     images = []
     count = 0
+    
+    # Important! Throw the first frame away. It's a stale buffered image
+    status, frame = camera.read()
+    #time.sleep(.1)
+    
     while count < NUM_IMAGES_TO_CAPTURE:
         count = count + 1
         # Read returns two values one is the exit code and other is the frame
@@ -159,7 +167,7 @@ def capture_images():
         images.append(frame)
         if count < NUM_IMAGES_TO_CAPTURE:
             time.sleep(TIME_BETWEEN_CAPTURES)
-    cv.destroyAllWindows()
+    #cv.destroyAllWindows()
     return images
 
 #############################################################
@@ -239,14 +247,11 @@ def do_capture_images():
 
     Returns: Array of OpenCV Images.
     """
-    set_ui_state(window, 'CAPTURING')
     
     images = capture_images()
     for i in range(len(images)):
         display_image_in_ui(images[i], "-IMAGE%d-" % i)
-        
-    window["-STATUS-"].update('NAMING')
-    
+
     return images
 
 def check_proximity_sensor():
