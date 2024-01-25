@@ -110,7 +110,7 @@ def build_window(list_values):
     layout = [
         [left_column, right_column],
         ]
-    window = sg.Window("Face Image Capture", layout, finalize=True)
+    window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
     return window
 
 ##########################################################################
@@ -154,7 +154,6 @@ def capture_images():
     
     # Important! Throw the first frame away. It's a stale buffered image
     status, frame = camera.read()
-    #time.sleep(.1)
     
     while count < NUM_IMAGES_TO_CAPTURE:
         count = count + 1
