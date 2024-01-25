@@ -107,10 +107,12 @@ def build_window(list_values):
                         key="-LIST-")],
             [sg.Button("Cancel",  key="-CANCEL-")],
         ], key='-RIGHT_COLUMN-', visible=False, expand_x=True, expand_y=True)
-    layout = [
-        [left_column, right_column],
-        ]
-    window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
+    # Push and VPush elements help UI to center when the window is maximized    
+    layout = [[sg.VPush()],
+              [sg.Push(), left_column, right_column, sg.Push()],
+              [sg.VPush()]]
+    window = sg.Window("Face Image Capture", layout, finalize=True,
+                        resizable=True)
     return window
 
 ##########################################################################
