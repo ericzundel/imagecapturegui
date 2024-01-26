@@ -15,7 +15,8 @@ import cv2 as cv
 import PySimpleGUI as sg
 
 DEFAULT_FONT = ("Any", 16)
-LIST_HEIGHT = 14
+LIST_HEIGHT = 14  # Number of rows in listbox element
+LIST_WIDTH = 20   # Characters wide for listbox element
 face_choices_file_path = "face_choices.json"
 rootfolder = "."
 NUM_IMAGES_TO_CAPTURE = 3
@@ -41,7 +42,7 @@ except BaseException:
     # It's OK, probably not running on Raspberry Pi
     proximity_sensor = None
     print("No proximity sensor detected")
-    
+
 ####################################################################
 # Setup OpenCV for reading from the camera
 #
@@ -59,7 +60,7 @@ def format_choice(choice_elem):
     Concatenate the first_name and last_name fields in the json array.
     This means that each entry in the JSON file must have a unique
     first name/last name combination.
-    
+
     Returns: string with first name and last name separated by a space.
     """
     return "%s %s" % (choice_elem["first_name"], choice_elem["last_name"])
@@ -82,7 +83,7 @@ def read_face_choices():
         # Now, loaded_dict contains the dictionary from the file
         # print(face_choices)
         return face_choices
-    
+
 def pin_image(val):
     """ Wrap the Image in a sg.pin element to make it small when invisible.
 
@@ -102,16 +103,19 @@ def build_window(list_values):
             [sg.Button("Manual Capture", key="-CAPTURE-", font=DEFAULT_FONT)],
             [pin_image(0)],
             [pin_image(1)],
-            [pin_image(2)]
+            [pin_image(2)],
+            [sg.Text()],  # vertical spacer
+            [sg.Text()],  # vertical spacer
+            [sg.Button("Exit")],
         ], key="-LEFT_COLUMN-", expand_x=True, expand_y=True)
     right_column = sg.Column([
-            [sg.Listbox(list_values, size=(20, LIST_HEIGHT), enable_events=True,
+            [sg.Listbox(list_values, size=(LIST_WIDTH, LIST_HEIGHT), enable_events=True,
                         key="-LIST-", font=DEFAULT_FONT)],
             [sg.Button("Cancel",  key="-CANCEL-", font=DEFAULT_FONT)],
         ], key='-RIGHT_COLUMN-', visible=False, expand_x=True, expand_y=True)
-    # Push and VPush elements help UI to center when the window is maximized    
+    # Push and VPush elements help UI to center when the window is maximized
     layout = [[sg.VPush()],
-              [sg.Push(), left_column, right_column, sg.Push()],
+              [sg.Push(), left_column, sg.pin(right_column), sg.Push()],
               [sg.VPush()]]
     window = sg.Window("Face Image Capture", layout, finalize=True,
                         resizable=True)
@@ -121,7 +125,7 @@ def build_window(list_values):
 
 ##########################################################################
 # Image handling
-# 
+#
 def save_images(images, choice):
     """Given an array of CV2 Images and a choice, save to PNG files.
 
@@ -157,10 +161,10 @@ def capture_images():
     """
     images = []
     count = 0
-    
+
     # Important! Throw the first frame away. It's a stale buffered image
     status, frame = camera.read()
-    
+
     while count < NUM_IMAGES_TO_CAPTURE:
         count = count + 1
         # Read returns two values one is the exit code and other is the frame
@@ -182,13 +186,13 @@ def set_ui_state(window, state):
     """Set the UI into a specified state.
 
     state: one of ['WAITING', 'CAPTURING', 'NAMING']
-    
+
     In state 'WAITING', most of the UI is hidden, but there is a
     button for manually capturing an image presented.
-    
+
     In state 'CAPTURING', the manual button is hidden and the
     status label is updated
-    
+
     In state 'NAMING', the captured images are displayed and
     a listbox with choices for choosing the names associated
     with the images is displayed.
@@ -237,9 +241,9 @@ def display_image_in_ui(image, ui_key):
     """Given an OpenCV image, display it in the UI in the element by ui_key.
 
     image: OpenCV Image buffer
-    
+
     ui_key: the key for an sg.Image element in the UI layout.
-    
+
     Returns: None
     """
     # Resize the image to fit
@@ -252,7 +256,7 @@ def do_capture_images():
 
     Returns: Array of OpenCV Images.
     """
-    
+
     images = capture_images()
     for i in range(len(images)):
         display_image_in_ui(images[i], "-IMAGE%d-" % i)
@@ -265,7 +269,7 @@ def check_proximity_sensor():
     This code assumes that if the proximity sensor was detected, the
     library has been initialized and an instance of ProximitySensor set
     in a global variable.
-    
+
     Returns: None
     """
     triggered = False
@@ -290,7 +294,7 @@ def main_loop():
 
         # Check for a trigger 4x a second
         event, values = window.read(timeout=250)
-        
+
         # Every time something happens in the UI, it returns an event.
         # By decoding this event you can figure out what happened and take
         # an action.
@@ -316,7 +320,7 @@ def main_loop():
             else:
                 set_ui_state(window, 'CAPTURING')
                 last_captured_images = do_capture_images()
-                last_captured_image_time = time.monotonic()        
+                last_captured_image_time = time.monotonic()
                 set_ui_state(window, 'NAMING')
 
         # if a list item is clicked on, the following code gest triggered
@@ -333,7 +337,7 @@ def main_loop():
             else:
                 # Now we can get the original object back from the json file
                 choice = choice_list[0]
-                
+
                 ####
                 # Save the stored images to disk
                 save_images(last_captured_images, choice)
@@ -361,7 +365,7 @@ try:
 except BaseException as e:
     print("Exiting due to %s" % str(e))
 
-# When everything done, release resources. 
+# When everything done, release resources.
 window.close()
 camera.release()
 if proximity_sensor != None:
