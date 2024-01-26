@@ -164,7 +164,7 @@ def capture_images():
         # Check if we get the frame or not
         if not status:
             print("Frame is not been captured. Exiting...")
-            raise Exception("Frame not captured")
+            raise Exception("Frame not captured. Is camera connected?")
         images.append(frame)
         if count < NUM_IMAGES_TO_CAPTURE:
             time.sleep(TIME_BETWEEN_CAPTURES)
