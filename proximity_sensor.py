@@ -131,14 +131,16 @@ class ProximitySensor:
             with self._sensor_lock:
                 if self._stop_now:
                     return
-            
+
+            distance = MAX_DISTANCE
             try:
                 distance = self._read_distance()
             except TimeoutError:
                 pass
-            
+
             with self._sensor_lock:
                 self._distance = distance
+
             elapsed = time.time() - start_time
             if distance < MAX_DISTANCE:
                 if self._debug:
