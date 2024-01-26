@@ -115,7 +115,7 @@ def build_window(list_values):
         ], key='-RIGHT_COLUMN-', visible=False, expand_x=True, expand_y=True)
     # Push and VPush elements help UI to center when the window is maximized
     layout = [[sg.VPush()],
-              [sg.Push(), left_column, sg.pin(right_column), sg.Push()],
+              [sg.Push(), [left_column, sg.pin(right_column)], sg.Push()],
               [sg.VPush()]]
     window = sg.Window("Face Image Capture", layout, finalize=True,
                         resizable=True)
