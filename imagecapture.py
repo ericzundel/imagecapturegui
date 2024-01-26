@@ -14,6 +14,8 @@ from datetime import datetime
 import cv2 as cv
 import PySimpleGUI as sg
 
+DEFAULT_FONT = ("Any", 16)
+LIST_HEIGHT = 14
 face_choices_file_path = "face_choices.json"
 rootfolder = "."
 NUM_IMAGES_TO_CAPTURE = 3
@@ -96,16 +98,16 @@ def build_window(list_values):
     Returns: sg.Window object
     """
     left_column = sg.Column([
-            [sg.Text(size=(18, 1), text="WAITING", key="-STATUS-")],
-            [sg.Button("Manual Capture", key="-CAPTURE-")],
+            [sg.Text(size=(18, 1), key="-STATUS-", font=DEFAULT_FONT)],
+            [sg.Button("Manual Capture", key="-CAPTURE-", font=DEFAULT_FONT)],
             [pin_image(0)],
             [pin_image(1)],
             [pin_image(2)]
         ], key="-LEFT_COLUMN-", expand_x=True, expand_y=True)
     right_column = sg.Column([
-            [sg.Listbox(list_values, size=(20, 30), enable_events=True,
-                        key="-LIST-")],
-            [sg.Button("Cancel",  key="-CANCEL-")],
+            [sg.Listbox(list_values, size=(20, LIST_HEIGHT), enable_events=True,
+                        key="-LIST-", font=DEFAULT_FONT)],
+            [sg.Button("Cancel",  key="-CANCEL-", font=DEFAULT_FONT)],
         ], key='-RIGHT_COLUMN-', visible=False, expand_x=True, expand_y=True)
     # Push and VPush elements help UI to center when the window is maximized    
     layout = [[sg.VPush()],
@@ -113,6 +115,8 @@ def build_window(list_values):
               [sg.VPush()]]
     window = sg.Window("Face Image Capture", layout, finalize=True,
                         resizable=True)
+    # Doing this makes the app take up the whole screen
+    window.maximize()
     return window
 
 ##########################################################################
