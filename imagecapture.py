@@ -24,7 +24,7 @@ NUM_IMAGES_TO_CAPTURE = 3
 TIME_BETWEEN_CAPTURES = .25
 
 DISPLAY_IMAGE_WIDTH = 130
-DISPLAY_IMAGE_HEIGHT = 130
+DISPLAY_IMAGE_HEIGHT = 110
 
 # The GUI won't snap another picture unless this timer expires
 WAIT_FOR_NAMING_SECS = 15
@@ -100,22 +100,22 @@ def build_window(list_values):
     """
     left_column = sg.Column([
             [sg.Text(size=(18, 1), key="-STATUS-", font=DEFAULT_FONT)],
-            [sg.Button("Manual Capture", key="-CAPTURE-", font=DEFAULT_FONT)],
+            [sg.pin(sg.Button("Manual Capture", key="-CAPTURE-", font=DEFAULT_FONT))],
             [pin_image(0)],
             [pin_image(1)],
             [pin_image(2)],
             [sg.Text()],  # vertical spacer
             [sg.Text()],  # vertical spacer
             [sg.Button("Exit")],
-        ], key="-LEFT_COLUMN-", expand_x=True, expand_y=True)
+        ], key="-LEFT_COLUMN-")
     right_column = sg.Column([
             [sg.Listbox(list_values, size=(LIST_WIDTH, LIST_HEIGHT), enable_events=True,
                         key="-LIST-", font=DEFAULT_FONT)],
             [sg.Button("Cancel",  key="-CANCEL-", font=DEFAULT_FONT)],
-        ], key='-RIGHT_COLUMN-', visible=False, expand_x=True, expand_y=True)
+        ], key='-RIGHT_COLUMN-', visible=False)
     # Push and VPush elements help UI to center when the window is maximized
     layout = [[sg.VPush()],
-              [sg.Push(), [left_column, sg.pin(right_column)], sg.Push()],
+              [sg.Push(), sg.Column([[left_column, sg.pin(right_column)]]), sg.Push()],
               [sg.VPush()]]
     window = sg.Window("Face Image Capture", layout, finalize=True,
                         resizable=True)
@@ -147,7 +147,7 @@ def save_images(images, choice):
         # Convert the image into gray format for fast caculation
         gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
         # Resizing the image to store it
-        gray = cv.resize(gray, (400, 400))
+        #gray = cv.resize(gray, (400, 400))
         # Store the image to specific label folder
         filename = "%s/img%s-%d.png" % (directory, timestamp, count)
         cv.imwrite(filename, gray)
