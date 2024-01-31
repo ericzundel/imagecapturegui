@@ -140,7 +140,7 @@ def build_window(list_values):
         ], key="-LEFT_COLUMN-")
     right_column = sg.Column([
             [sg.Listbox(list_values, size=(LIST_WIDTH, LIST_HEIGHT), enable_events=True,
-                        key="-LIST-", font=DEFAULT_FONT)],
+                        key="-LIST-", font=DEFAULT_FONT, sbar_width=30, sbar_arrow_width=30)],
             [sg.Button("Cancel",  key="-CANCEL-", font=DEFAULT_FONT)],
         ], key='-RIGHT_COLUMN-', visible=False)
     # Push and VPush elements help UI to center when the window is maximized
