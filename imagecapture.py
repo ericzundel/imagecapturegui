@@ -68,7 +68,7 @@ except RuntimeError as e:
 if GPIO is not None:
     GPIO.setmode(GPIO.BCM)
 
-    push_button_pion = 21
+    push_button_pin = 21
 
     # Setup IO pin for button
     GPIO.setup(push_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
