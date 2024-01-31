@@ -34,14 +34,44 @@ WAIT_FOR_NAMING_SECS = 15
 # Setup the Ultrasonic Sensor as a proximity sensor
 # (Requires extra hardware - only works on Raspberry Pi)
 #
+#try:
+#    from proximity_sensor import ProximitySensor
+#    proximity_sensor = ProximitySensor(echo_pin=17, trigger_pin=4, debug=True)
+#    print("Proximity Sensor initialized")
+#except BaseException:
+#    # It's OK, probably not running on Raspberry Pi
+#    proximity_sensor = None
+#    print("No proximity sensor detected")
+proximity_sensor = None
+
 try:
-    from proximity_sensor import ProximitySensor
-    proximity_sensor = ProximitySensor(echo_pin=17, trigger_pin=4, debug=True)
-    print("Proximity Sensor initialized")
-except BaseException:
-    # It's OK, probably not running on Raspberry Pi
-    proximity_sensor = None
-    print("No proximity sensor detected")
+    import RPi.GPIO as GPIO
+except ModuleNotFoundError:
+    print(
+        "Error importing RPi.GPIO!  ",
+        "This is probably because you are not running on a Raspberry Pi."
+        "Ignoring."
+    )
+    GPIO = None
+except RuntimeError as e:
+    print(
+        "Error importing RPi.GPIO!  ",
+        "This is probably because you need superuser privileges.  ",
+        "You can achieve this by using 'sudo' to run your script",
+    )
+    raise e
+
+
+
+##########################
+# Setup the Ultrasonic sensor pins
+if GPIO is not None:
+    GPIO.setmode(GPIO.BCM)
+
+    push_button_pion = 21
+
+    # Setup IO pin for button
+    GPIO.setup(push_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 ####################################################################
 # Setup OpenCV for reading from the camera
@@ -277,6 +307,12 @@ def check_proximity_sensor():
         triggered = proximity_sensor.is_triggered()
     return triggered
 
+def check_button():
+    """ There is a button attached to GPIO21. See if it is low"""
+    if GPIO is not None:
+        if GPIO.input(push_button_pin) == GPIO.LOW:
+            return True
+    return False
 # ###########################################################################
 # UI Event Loop
 #
@@ -293,7 +329,7 @@ def main_loop():
     while True:
 
         # Check for a trigger 4x a second
-        event, values = window.read(timeout=250)
+        event, values = window.read(timeout=50)
 
         # Every time something happens in the UI, it returns an event.
         # By decoding this event you can figure out what happened and take
@@ -310,7 +346,7 @@ def main_loop():
 
         # Check to see if we are to capture new images by checking the
         # proximity sensor hardware or if the button was pressed
-        if check_proximity_sensor() or event == "-CAPTURE-":
+        if check_button() or event == "-CAPTURE-":
             remaining_secs = WAIT_FOR_NAMING_SECS - (time.monotonic() - last_captured_image_time)
             if (event != "-CAPTURE-"
                 and last_captured_images != []
