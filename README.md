@@ -8,7 +8,7 @@ a database for a segment of machine learning.
 ## Details
 
 - A workstation/Raspberry Pi will be setup at the entrance to the classroom.
-- A sensor (or a UI button) will trigger capturing images from the camera.
+- A sensor (or a push button) will trigger capturing images from the camera.
 - As students will enter the classroom each day, they will choose their name from the drop down list
 - Files will be written to a directory named 'images' with the
   first and last name concatenated together
@@ -52,7 +52,7 @@ to the Raspberry Pi GPIO.
 
 The sensor is controlled by a custom library that spawns a thread to read the sensor in a loop.
 See proximity_sensor.py.  I'm not sure that the Raspberry Pi has real threading, but it seems to be 
-OKish. In general, the sensor is not as responsive as I'd like but seems to be working. 
+OKish. In general, the sensor is not as responsive as I'd like so we substituted a pushbutton!
 
 ## Running the Code
 
