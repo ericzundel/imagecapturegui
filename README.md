@@ -7,7 +7,7 @@ a database for a segment of machine learning.
 
 ## Details
 
-- A workstation/Raspberry Pi will be setup at the entrance to the classroom. ![Setup at entrance to classroom](https://github.com/ericzundel/imagecapturegui/CameraAndButton.png)
+- A workstation/Raspberry Pi will be setup at the entrance to the classroom. ![Setup at entrance to classroom](https://raw.githubusercontent.com/ericzundel/imagecapturegui/main/CameraAndButton.png)
 - A sensor (or a push button) will trigger capturing images from the camera.
 - As students will enter the classroom each day, they will choose their name from the drop down list
 - Files will be written to a directory named 'images' with the
