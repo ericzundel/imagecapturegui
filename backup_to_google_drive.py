@@ -56,19 +56,10 @@ def upload_file(service, local_file_path, folder_id):
     file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     print(f'File uploaded: {file.get("id")}')
 
-def backup_to_google_drive(local_folder_path, drive_folder_name):
+def backup_to_google_drive(parent_folder_id, local_folder_path, drive_folder_name):
     creds = authenticate()
     service = build('drive', 'v3', credentials=creds)
-
-    # Check if the folder already exists, if not, create it
-    folder_id = None
-    query = f"name='{drive_folder_name}' and mimeType='application/vnd.google-apps.folder'"
-    results = service.files().list(q=query).execute().get('files', [])
-
-    if not results:
-        folder_id = create_folder(service, drive_folder_name)
-    else:
-        folder_id = results[0]['id']
+    folder_id = create_folder(service, drive_folder_name, parent_folder_id=parent_folder_id)
 
     # Recursively upload files from the local folder to the Google Drive folder
     for root, dirs, files in os.walk(local_folder_path):
@@ -78,9 +69,10 @@ def backup_to_google_drive(local_folder_path, drive_folder_name):
 
 if __name__ == '__main__':
     current_datetime = datetime.now()
+    parent_folder_id = '1OETVNj1z8CXX-AAIwGVh2v7QIfMWePv7'
     local_folder_path = './images'
     drive_folder_name = 'MLImages-backup-%s' % (current_datetime.strftime("%y%m%d-%H%M%S"))
 
 
     print ("Backing up %s to %s" % (local_folder_path, drive_folder_name))
-    backup_to_google_drive(local_folder_path, drive_folder_name)
+    backup_to_google_drive(parent_folder_id, local_folder_path, drive_folder_name)
