@@ -15,13 +15,13 @@ import cv2 as cv
 import PySimpleGUI as sg
 
 DEFAULT_FONT = ("Any", 16)
-LIST_HEIGHT = 14  # Number of rows in listbox element
-LIST_WIDTH = 20   # Characters wide for listbox element
+LIST_HEIGHT = 12  # Number of rows in listbox element
+LIST_WIDTH = 20  # Characters wide for listbox element
 face_choices_file_path = "face_choices.json"
 rootfolder = "."
 NUM_IMAGES_TO_CAPTURE = 3
 # When taking multiple images, wait this many seconds between
-TIME_BETWEEN_CAPTURES = .25
+TIME_BETWEEN_CAPTURES = 0.25
 
 DISPLAY_IMAGE_WIDTH = 130
 DISPLAY_IMAGE_HEIGHT = 110
@@ -34,11 +34,11 @@ WAIT_FOR_NAMING_SECS = 15
 # Setup the Ultrasonic Sensor as a proximity sensor
 # (Requires extra hardware - only works on Raspberry Pi)
 #
-#try:
+# try:
 #    from proximity_sensor import ProximitySensor
 #    proximity_sensor = ProximitySensor(echo_pin=17, trigger_pin=4, debug=True)
 #    print("Proximity Sensor initialized")
-#except BaseException:
+# except BaseException:
 #    # It's OK, probably not running on Raspberry Pi
 #    proximity_sensor = None
 #    print("No proximity sensor detected")
@@ -49,8 +49,7 @@ try:
 except ModuleNotFoundError:
     print(
         "Error importing RPi.GPIO!  ",
-        "This is probably because you are not running on a Raspberry Pi."
-        "Ignoring."
+        "This is probably because you are not running on a Raspberry Pi." "Ignoring.",
     )
     GPIO = None
 except RuntimeError as e:
@@ -82,6 +81,7 @@ camera.set(cv.CAP_PROP_BUFFERSIZE, 1)
 ####################################################################
 # GUI Setup
 
+
 def format_choice(choice_elem):
     """Format one element of the JSON array for display.
 
@@ -92,6 +92,7 @@ def format_choice(choice_elem):
     Returns: string with first name and last name separated by a space.
     """
     return "%s %s" % (choice_elem["first_name"], choice_elem["last_name"])
+
 
 def read_face_choices():
     """Read the JSON file and process it, checking for errors.
@@ -112,21 +113,25 @@ def read_face_choices():
         # print(face_choices)
         return face_choices
 
+
 def pin_image(val):
-    """ Wrap the Image in a sg.pin element to make it small when invisible.
+    """Wrap the Image in a sg.pin element to make it small when invisible.
 
     Returns: sg.Element to add to a layout
     """
     # https://stackoverflow.com/questions/72970201
-    return sg.pin(sg.Image(size=(5, 5), key="-IMAGE%d-" % val,
-                    expand_x=True, expand_y=True))
+    return sg.pin(
+        sg.Image(size=(5, 5), key="-IMAGE%d-" % val, expand_x=True, expand_y=True)
+    )
+
 
 def build_window(list_values):
     """Builds the user interface and pops it up on the screen.
 
     Returns: sg.Window object
     """
-    left_column = sg.Column([
+    left_column = sg.Column(
+        [
             [sg.Text(size=(18, 1), key="-STATUS-", font=DEFAULT_FONT)],
             [sg.pin(sg.Button("Manual Capture", key="-CAPTURE-", font=DEFAULT_FONT))],
             [pin_image(0)],
@@ -135,21 +140,38 @@ def build_window(list_values):
             [sg.Text()],  # vertical spacer
             [sg.Text()],  # vertical spacer
             [sg.Button("Exit")],
-        ], key="-LEFT_COLUMN-")
-    right_column = sg.Column([
-            [sg.Listbox(list_values, size=(LIST_WIDTH, LIST_HEIGHT), enable_events=True,
-                        key="-LIST-", font=DEFAULT_FONT, sbar_width=30, sbar_arrow_width=30)],
-            [sg.Button("Cancel",  key="-CANCEL-", font=DEFAULT_FONT)],
-        ], key='-RIGHT_COLUMN-', visible=False)
+        ],
+        key="-LEFT_COLUMN-",
+    )
+    right_column = sg.Column(
+        [
+            [
+                sg.Listbox(
+                    list_values,
+                    size=(LIST_WIDTH, LIST_HEIGHT),
+                    enable_events=True,
+                    key="-LIST-",
+                    font=("Any", 18),
+                    sbar_width=30,
+                    sbar_arrow_width=30,
+                )
+            ],
+            [sg.Button("Cancel", key="-CANCEL-", font=DEFAULT_FONT)],
+        ],
+        key="-RIGHT_COLUMN-",
+        visible=False,
+    )
     # Push and VPush elements help UI to center when the window is maximized
-    layout = [[sg.VPush()],
-              [sg.Push(), sg.Column([[left_column, sg.pin(right_column)]]), sg.Push()],
-              [sg.VPush()]]
-    window = sg.Window("Face Image Capture", layout, finalize=True,
-                        resizable=True)
+    layout = [
+        [sg.VPush()],
+        [sg.Push(), sg.Column([[left_column, sg.pin(right_column)]]), sg.Push()],
+        [sg.VPush()],
+    ]
+    window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
     # Doing this makes the app take up the whole screen
     window.maximize()
     return window
+
 
 ##########################################################################
 # Image handling
@@ -174,12 +196,13 @@ def save_images(images, choice):
         # Convert the image into gray format for fast caculation
         gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
         # Resizing the image to store it
-        #gray = cv.resize(gray, (400, 400))
+        # gray = cv.resize(gray, (400, 400))
         # Store the image to specific label folder
         filename = "%s/img%s-%d.png" % (directory, timestamp, count)
         cv.imwrite(filename, gray)
         print("Wrote %s" % (filename))
         count = count + 1
+
 
 def capture_images():
     """Captures NUM_IMAGES_TO_CAPTURE from the camera
@@ -203,8 +226,9 @@ def capture_images():
         images.append(frame)
         if count < NUM_IMAGES_TO_CAPTURE:
             time.sleep(TIME_BETWEEN_CAPTURES)
-    #cv.destroyAllWindows()
+    # cv.destroyAllWindows()
     return images
+
 
 #############################################################
 # GUI Runtime actions
@@ -227,7 +251,7 @@ def set_ui_state(window, state):
     Returns: None
     """
 
-    if (state == 'WAITING'):
+    if state == "WAITING":
         # Hide images and right column
         # Show manual capture button
         window["-STATUS-"].update("Waiting to Capture")
@@ -237,14 +261,14 @@ def set_ui_state(window, state):
         window["-RIGHT_COLUMN-"].update(visible=False)
         window["-LEFT_COLUMN-"].expand(True, True)
 
-    elif (state == 'CAPTURING'):
+    elif state == "CAPTURING":
         # Hide Manual capture button
         window["-STATUS-"].update("Choose a Label")
         window["-CAPTURE-"].update(visible=False)
         for i in range(3):
             window["-IMAGE%d-" % i].update(size=(0, 0), data=None, visible=False)
 
-    elif (state == 'NAMING'):
+    elif state == "NAMING":
         # Turn on the right column
         window["-STATUS-"].update("Choose a Label")
         window["-RIGHT_COLUMN-"].update(visible=True)
@@ -253,6 +277,7 @@ def set_ui_state(window, state):
             window["-IMAGE%d-" % i].update(data=None, visible=True)
     else:
         raise RuntimeError("Invalid state %s" % state)
+
 
 def get_selected_value(value_list):
     """Retrieve the selected value as a scalar, not a one item list.
@@ -275,8 +300,9 @@ def display_image_in_ui(image, ui_key):
     """
     # Resize the image to fit
     resized = cv.resize(image, (DISPLAY_IMAGE_WIDTH, DISPLAY_IMAGE_HEIGHT))
-    img_bytes = cv.imencode('.png', resized)[1].tobytes()
+    img_bytes = cv.imencode(".png", resized)[1].tobytes()
     window[ui_key].update(data=img_bytes)
+
 
 def do_capture_images():
     """Updates the UI for capturing images and pulls them from the camera.
@@ -290,6 +316,7 @@ def do_capture_images():
 
     return images
 
+
 def check_proximity_sensor():
     """Conditionally checks the proximity sensor.
 
@@ -300,27 +327,49 @@ def check_proximity_sensor():
     Returns: None
     """
     triggered = False
-    if proximity_sensor != None:
+    if proximity_sensor is not None:
         triggered = proximity_sensor.is_triggered()
     return triggered
 
+
 def check_button():
-    """ There is a button attached to GPIO21. See if it is low"""
+    """There is a button attached to GPIO21. See if it is low"""
     if GPIO is not None:
         if GPIO.input(push_button_pin) == GPIO.LOW:
             return True
     return False
+
+
+def confirm_choice(choice):
+    name = "%s %s" % (choice["first_name"], choice["last_name"])
+
+    layout = [[sg.Text("Save for %s?" % name, font=DEFAULT_FONT)],
+              [sg.OK(font=DEFAULT_FONT), sg.Cancel(font=DEFAULT_FONT)]]
+
+    dialog = sg.Window("Confirm Choice", layout)
+
+    while True:
+        event, values = dialog.read()
+
+        if event == sg.WINDOW_CLOSED or event == "Cancel":
+            dialog.close()
+            return False
+        elif event == "OK":
+            dialog.close()
+            return True
+
+
 # ###########################################################################
 # UI Event Loop
 #
 # This loop executes until someone closes the main window.
 #
 def main_loop():
-    # last_captured_images: Keep this variable to remember the last set of images captured
+    # last_captured_images: Remember the last set of images captured
     # from the camera.  Clear this variable after saving them to disk.
     last_captured_images = []
 
-    # last_captured_image_time: Used to keep from rapidly capturing images along with WAIT_FOR_NAMING_SECS
+    # last_captured_image_time: Used w/ WAIT_FOR_NAMING_SECS
     # to give the user a chance to use the UI.
     last_captured_image_time = 0
     while True:
@@ -339,44 +388,57 @@ def main_loop():
         if event == "-CANCEL-":
             last_captured_images = []
             last_captured_image_time = 0
-            set_ui_state(window, 'WAITING')
+            set_ui_state(window, "WAITING")
 
         # Check to see if we are to capture new images by checking the
         # proximity sensor hardware or if the button was pressed
         if check_button() or event == "-CAPTURE-":
-            remaining_secs = WAIT_FOR_NAMING_SECS - (time.monotonic() - last_captured_image_time)
-            if (event != "-CAPTURE-"
+            remaining_secs = WAIT_FOR_NAMING_SECS - (
+                time.monotonic() - last_captured_image_time
+            )
+            if (
+                event != "-CAPTURE-"
                 and last_captured_images != []
-                and (remaining_secs > 0)):
-                print("Waiting for %d secs for timeout before automatically capturing again." %
-                      remaining_secs)
+                and (remaining_secs > 0)
+            ):
+                print(
+                    "Waiting for %d secs for timeout before capturing again."
+                    % remaining_secs
+                )
             else:
-                set_ui_state(window, 'CAPTURING')
+                set_ui_state(window, "CAPTURING")
                 last_captured_images = do_capture_images()
                 last_captured_image_time = time.monotonic()
-                set_ui_state(window, 'NAMING')
+                set_ui_state(window, "NAMING")
 
         # if a list item is clicked on, the following code gest triggered
         if event == "-LIST-" and len(values["-LIST-"]):
             selected_value = get_selected_value(values["-LIST-"])
             choice_list = [
-                choice for choice in face_choices if format_choice(choice) == selected_value
+                choice
+                for choice in face_choices
+                if format_choice(choice) == selected_value
             ]
 
             if choice_list is None:
-                sg.popup("Whoops, something went wrong when retrieving element from list")
+                sg.popup(
+                    "Whoops, something went wrong when retrieving element from list"
+                )
             elif last_captured_images is []:
                 sg.popup("Whoops, no images captured")
             else:
                 # Now we can get the original object back from the json file
                 choice = choice_list[0]
 
+                confirm_choice(choice)
+
                 ####
                 # Save the stored images to disk
                 save_images(last_captured_images, choice)
                 last_captured_images = []
                 last_captured_image_time = 0
-                set_ui_state(window, 'WAITING')
+                set_ui_state(window, "WAITING")
+
 
 # ###################################################################
 # Setup the User Interface
@@ -391,7 +453,7 @@ print("List of names found in JSON file is:", names)
 
 # Create and display the main UI
 window = build_window(names)
-set_ui_state(window, 'WAITING')
+set_ui_state(window, "WAITING")
 
 try:
     main_loop()
@@ -401,6 +463,5 @@ except BaseException as e:
 # When everything done, release resources.
 window.close()
 camera.release()
-if proximity_sensor != None:
+if proximity_sensor is not None:
     proximity_sensor.deinit()
-
