@@ -139,7 +139,8 @@ def build_window(list_values):
             [pin_image(2)],
             [sg.Text()],  # vertical spacer
             [sg.Text()],  # vertical spacer
-            [sg.Button("Exit")],
+            [sg.Text()],  # vertical spacer
+            [sg.Button("Exit", font=("Any", 6))],
         ],
         key="-LEFT_COLUMN-",
     )
@@ -430,14 +431,12 @@ def main_loop():
                 # Now we can get the original object back from the json file
                 choice = choice_list[0]
 
-                confirm_choice(choice)
-
-                ####
-                # Save the stored images to disk
-                save_images(last_captured_images, choice)
-                last_captured_images = []
-                last_captured_image_time = 0
-                set_ui_state(window, "WAITING")
+                if confirm_choice(choice):
+                    # Save the stored images to disk
+                    save_images(last_captured_images, choice)
+                    last_captured_images = []
+                    last_captured_image_time = 0
+                    set_ui_state(window, "WAITING")
 
 
 # ###################################################################
