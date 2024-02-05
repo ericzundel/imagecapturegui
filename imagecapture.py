@@ -61,8 +61,6 @@ except RuntimeError as e:
     )
     raise e
 
-
-
 ##########################
 # Setup the Ultrasonic sensor pins
 if GPIO is not None:
@@ -161,9 +159,8 @@ def save_images(images, choice):
 
     Returns: None
     """
-    directory = os.path.join(
-        "images", "%s%s" % (choice["first_name"], choice["last_name"])
-    )
+    first_last = "%s_%s" % (choice["first_name"], choice["last_name"])
+    directory = os.path.join("images", first_last)
     print("Capturing images for %s in dir %s" % (format_choice(choice), directory))
     #
     # Call OpenCV to capture from the camera
