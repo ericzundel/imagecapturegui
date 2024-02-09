@@ -19,9 +19,10 @@ LIST_HEIGHT = 12  # Number of rows in listbox element
 LIST_WIDTH = 20  # Characters wide for listbox element
 face_choices_file_path = "face_choices.json"
 rootfolder = "."
-NUM_IMAGES_TO_CAPTURE = 3
+NUM_IMAGES_TO_CAPTURE = 6  # Number of frames to capture from the camera
+NUM_IMAGES_TO_SHOW = 3     # Num images to display <= NUM_IMAGES_TO_CAPTURE
 # When taking multiple images, wait this many seconds between
-TIME_BETWEEN_CAPTURES = 0.25
+TIME_BETWEEN_CAPTURES = 0.2
 
 DISPLAY_IMAGE_WIDTH = 130
 DISPLAY_IMAGE_HEIGHT = 110
@@ -136,7 +137,7 @@ def build_window(list_values):
             [sg.pin(sg.Button("Manual Capture", key="-CAPTURE-", font=DEFAULT_FONT))],
             [pin_image(0)],
             [pin_image(1)],
-            [pin_image(2)],
+            [pin_image(2)], # Coordinate this logic with NUM_IMAGES_TO_SHOW
             [sg.Text()],  # vertical spacer
             [sg.Text()],  # vertical spacer
             [sg.Text()],  # vertical spacer
@@ -220,21 +221,21 @@ def capture_images():
         count = count + 1
         # Read returns two values one is the exit code and other is the frame
         status, frame = camera.read()
-        # Check if we get the frame or not
+        # Check if we got the frame
         if not status:
             print("Frame is not been captured. Exiting...")
             raise Exception("Frame not captured. Is camera connected?")
         images.append(frame)
         if count < NUM_IMAGES_TO_CAPTURE:
             time.sleep(TIME_BETWEEN_CAPTURES)
-    # cv.destroyAllWindows()
+
     return images
 
 
 #############################################################
 # GUI Runtime actions
 #
-def set_ui_state(window, state):
+def set_ui_state(window, state, images=None):
     """Set the UI into a specified state.
 
     state: one of ['WAITING', 'CAPTURING', 'NAMING']
@@ -257,7 +258,7 @@ def set_ui_state(window, state):
         # Show manual capture button
         window["-STATUS-"].update("Waiting to Capture")
         window["-CAPTURE-"].update(visible=True)
-        for i in range(3):
+        for i in range(NUM_IMAGES_TO_SHOW):
             window["-IMAGE%d-" % i].update(size=(0, 0), data=None, visible=False)
         window["-RIGHT_COLUMN-"].update(visible=False)
         window["-LEFT_COLUMN-"].expand(True, True)
@@ -266,7 +267,7 @@ def set_ui_state(window, state):
         # Hide Manual capture button
         window["-STATUS-"].update("Choose a Label")
         window["-CAPTURE-"].update(visible=False)
-        for i in range(3):
+        for i in range(NUM_IMAGES_TO_SHOW):
             window["-IMAGE%d-" % i].update(size=(0, 0), data=None, visible=False)
 
     elif state == "NAMING":
@@ -274,8 +275,10 @@ def set_ui_state(window, state):
         window["-STATUS-"].update("Choose a Label")
         window["-RIGHT_COLUMN-"].update(visible=True)
         window["-CAPTURE-"].update(visible=False)
-        for i in range(3):
-            window["-IMAGE%d-" % i].update(data=None, visible=True)
+        if images is None:
+            raise RuntimeError("No images passed. Need an array of %d" % NUM_IMAGES_TO_SHOW)
+        for i in range(NUM_IMAGES_TO_SHOW):
+            display_image_in_ui(images[i], "-IMAGE%d-" % i)
     else:
         raise RuntimeError("Invalid state %s" % state)
 
@@ -302,21 +305,7 @@ def display_image_in_ui(image, ui_key):
     # Resize the image to fit
     resized = cv.resize(image, (DISPLAY_IMAGE_WIDTH, DISPLAY_IMAGE_HEIGHT))
     img_bytes = cv.imencode(".png", resized)[1].tobytes()
-    window[ui_key].update(data=img_bytes)
-
-
-def do_capture_images():
-    """Updates the UI for capturing images and pulls them from the camera.
-
-    Returns: Array of OpenCV Images.
-    """
-
-    images = capture_images()
-    for i in range(len(images)):
-        display_image_in_ui(images[i], "-IMAGE%d-" % i)
-
-    return images
-
+    window[ui_key].update(data=img_bytes, visible=True)
 
 def check_proximity_sensor():
     """Conditionally checks the proximity sensor.
@@ -408,9 +397,9 @@ def main_loop():
                 )
             else:
                 set_ui_state(window, "CAPTURING")
-                last_captured_images = do_capture_images()
+                last_captured_images = capture_images()
                 last_captured_image_time = time.monotonic()
-                set_ui_state(window, "NAMING")
+                set_ui_state(window, "NAMING", images=last_captured_images)
 
         # if a list item is clicked on, the following code gest triggered
         if event == "-LIST-" and len(values["-LIST-"]):
