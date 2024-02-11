@@ -65,4 +65,4 @@ python -m venv venv
 venv/bin/pip install -r requirements.txt
 ```
 
-After installing libraries, running `python imagacapture.py` should start the GUI
+After installing libraries, running `python imagecapture.py` should start the GUI
