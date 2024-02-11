@@ -56,6 +56,13 @@ OKish. In general, the sensor is not as responsive as I'd like so we substituted
 
 ## Running the Code
 
-Libraries to install are in requirements.txt.  You can install them with `pip -r requirements.txt`
+Libraries to install are in requirements.txt.  You might be able to install them with `pip install -r requirements.txt`, but each version of Raspberry Pi OS seems to be different.
+
+Raspberry Pi 4 with full image, I used:
+```
+sudo apt install python3-opencv
+python -m venv venv
+venv/bin/pip install -r requirements.txt
+```
 
 After installing libraries, running `python imagacapture.py` should start the GUI
