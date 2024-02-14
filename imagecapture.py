@@ -334,14 +334,14 @@ def check_button():
 def confirm_choice(choice):
     try:
         # Stop the main window from taking input
-        window.disable()
+        # window.disable() # Works in windows, breaks in Linux
 
         name = "%s %s" % (choice["first_name"], choice["last_name"])
 
-        layout = [[sg.Text("Save for %s?" % name, font=DEFAULT_FONT)],
+        dialog_layout = [[sg.Text("Save for %s?" % name, font=DEFAULT_FONT)],
                   [sg.OK(font=DEFAULT_FONT), sg.Cancel(font=DEFAULT_FONT)]]
 
-        dialog = sg.Window("Confirm Choice", layout, keep_on_top=True, finalize=True)
+        dialog = sg.Window("Confirm Choice", dialog_layout, keep_on_top=True, finalize=True)
 
         while True:
             event, values = dialog.read()
@@ -354,7 +354,7 @@ def confirm_choice(choice):
                 return True
     finally:
         # Re-enable the main window
-        window.enable()
+        # window.enable() # Works on Windows, breaks on Linux
         window.force_focus()
 
 # ###########################################################################
