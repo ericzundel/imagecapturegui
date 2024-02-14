@@ -337,6 +337,7 @@ def confirm_choice(choice):
               [sg.OK(font=DEFAULT_FONT), sg.Cancel(font=DEFAULT_FONT)]]
 
     dialog = sg.Window("Confirm Choice", layout)
+    dialog.focus()
 
     while True:
         event, values = dialog.read()
