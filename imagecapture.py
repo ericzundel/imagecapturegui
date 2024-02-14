@@ -336,8 +336,7 @@ def confirm_choice(choice):
     layout = [[sg.Text("Save for %s?" % name, font=DEFAULT_FONT)],
               [sg.OK(font=DEFAULT_FONT), sg.Cancel(font=DEFAULT_FONT)]]
 
-    dialog = sg.Window("Confirm Choice", layout)
-    dialog.focus()
+    dialog = sg.Window("Confirm Choice", layout, keep_on_top=True)
 
     while True:
         event, values = dialog.read()
