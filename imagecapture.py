@@ -169,7 +169,8 @@ def build_window(list_values):
         [sg.Push(), sg.Column([[left_column, sg.pin(right_column)]]), sg.Push()],
         [sg.VPush()],
     ]
-    window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
+    window = sg.Window("Face Image Capture", layout,
+                       finalize=True, resizable=True)
     # Doing this makes the app take up the whole screen
     window.maximize()
     return window
@@ -331,23 +332,30 @@ def check_button():
 
 
 def confirm_choice(choice):
-    name = "%s %s" % (choice["first_name"], choice["last_name"])
+    try:
+        # Stop the main window from taking input
+        window.disable()
 
-    layout = [[sg.Text("Save for %s?" % name, font=DEFAULT_FONT)],
-              [sg.OK(font=DEFAULT_FONT), sg.Cancel(font=DEFAULT_FONT)]]
+        name = "%s %s" % (choice["first_name"], choice["last_name"])
 
-    dialog = sg.Window("Confirm Choice", layout, keep_on_top=True)
+        layout = [[sg.Text("Save for %s?" % name, font=DEFAULT_FONT)],
+                  [sg.OK(font=DEFAULT_FONT), sg.Cancel(font=DEFAULT_FONT)]]
 
-    while True:
-        event, values = dialog.read()
+        dialog = sg.Window("Confirm Choice", layout, keep_on_top=True, finalize=True)
 
-        if event == sg.WINDOW_CLOSED or event == "Cancel":
-            dialog.close()
-            return False
-        elif event == "OK":
-            dialog.close()
-            return True
+        while True:
+            event, values = dialog.read()
 
+            if event == sg.WINDOW_CLOSED or event == "Cancel":
+                dialog.close()
+                return False
+            elif event == "OK":
+                dialog.close()
+                return True
+    finally:
+        # Re-enable the main window
+        window.enable()
+        window.force_focus()
 
 # ###########################################################################
 # UI Event Loop
