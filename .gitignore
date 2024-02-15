@@ -3,3 +3,5 @@ venv/
 drive-oauth.json
 credentials.json
 token.json
+images/*/
+__pycache__/
