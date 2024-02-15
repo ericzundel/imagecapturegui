@@ -17,19 +17,19 @@ import PySimpleGUI as sg
 DEFAULT_FONT = ("Any", 16)
 LIST_HEIGHT = 12  # Number of rows in listbox element
 LIST_WIDTH = 20  # Characters wide for listbox element
-face_choices_file_path = "face_choices.json"
-rootfolder = "."
+FACE_CHOICES_FILE_PATH = "face_choices.json"
+ROOT_FOLDER = "."
 NUM_IMAGES_TO_CAPTURE = 6  # Number of frames to capture from the camera
-NUM_IMAGES_TO_SHOW = 3     # Num images to display <= NUM_IMAGES_TO_CAPTURE
+NUM_IMAGES_TO_SHOW = 3  # Num images to display <= NUM_IMAGES_TO_CAPTURE
+
 # When taking multiple images, wait this many seconds between
 TIME_BETWEEN_CAPTURES = 0.2
 
-DISPLAY_IMAGE_WIDTH = 130
-DISPLAY_IMAGE_HEIGHT = 110
+DISPLAY_IMAGE_WIDTH = 120  # Size of image when displayed on screen
+DISPLAY_IMAGE_HEIGHT = 120
 
-# The GUI won't snap another picture unless this timer expires
+# The proximity sensor won't trigger another picture unless this timer expires
 WAIT_FOR_NAMING_SECS = 15
-
 
 ####################################################################
 # Setup the Ultrasonic Sensor as a proximity sensor
@@ -43,6 +43,8 @@ WAIT_FOR_NAMING_SECS = 15
 #    # It's OK, probably not running on Raspberry Pi
 #    proximity_sensor = None
 #    print("No proximity sensor detected")
+
+# Our sensor was unreliable...
 proximity_sensor = None
 
 try:
@@ -100,13 +102,13 @@ def read_face_choices():
 
     Returns: dictionary containing the data in the json file.
     """
-    with open(face_choices_file_path, "r") as file:
+    with open(FACE_CHOICES_FILE_PATH, "r") as file:
         try:
             face_choices = json.load(file)
         except Exception as ex:
             print(
                 ">>>Looks like something went wrong loading %s. Is it valid JSON?",
-                (face_choices_file_path),
+                (FACE_CHOICES_FILE_PATH),
             )
             raise ex
 
@@ -137,7 +139,7 @@ def build_window(list_values):
             [sg.pin(sg.Button("Manual Capture", key="-CAPTURE-", font=DEFAULT_FONT))],
             [pin_image(0)],
             [pin_image(1)],
-            [pin_image(2)], # Coordinate this logic with NUM_IMAGES_TO_SHOW
+            [pin_image(2)],  # Coordinate this logic with NUM_IMAGES_TO_SHOW
             [sg.Text()],  # vertical spacer
             [sg.Text()],  # vertical spacer
             [sg.Text()],  # vertical spacer
@@ -169,8 +171,7 @@ def build_window(list_values):
         [sg.Push(), sg.Column([[left_column, sg.pin(right_column)]]), sg.Push()],
         [sg.VPush()],
     ]
-    window = sg.Window("Face Image Capture", layout,
-                       finalize=True, resizable=True)
+    window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
     # Doing this makes the app take up the whole screen
     window.maximize()
     return window
@@ -277,7 +278,9 @@ def set_ui_state(window, state, images=None):
         window["-RIGHT_COLUMN-"].update(visible=True)
         window["-CAPTURE-"].update(visible=False)
         if images is None:
-            raise RuntimeError("No images passed. Need an array of %d" % NUM_IMAGES_TO_SHOW)
+            raise RuntimeError(
+                "No images passed. Need an array of %d" % NUM_IMAGES_TO_SHOW
+            )
         for i in range(NUM_IMAGES_TO_SHOW):
             display_image_in_ui(images[i], "-IMAGE%d-" % i)
     else:
@@ -308,6 +311,7 @@ def display_image_in_ui(image, ui_key):
     img_bytes = cv.imencode(".png", resized)[1].tobytes()
     window[ui_key].update(data=img_bytes, visible=True)
 
+
 def check_proximity_sensor():
     """Conditionally checks the proximity sensor.
 
@@ -332,30 +336,14 @@ def check_button():
 
 
 def confirm_choice(choice):
-    try:
-        # Stop the main window from taking input
-        # window.disable() # Works in windows, breaks in Linux
+    name = "%s %s" % (choice["first_name"], choice["last_name"])
+    result = sg.popup_ok_cancel(
+        "Save for %s?" % name, keep_on_top=True, font=DEFAULT_FONT
+    )
+    if result == "OK":
+        return True
+    return False
 
-        name = "%s %s" % (choice["first_name"], choice["last_name"])
-
-        dialog_layout = [[sg.Text("Save for %s?" % name, font=DEFAULT_FONT)],
-                  [sg.OK(font=DEFAULT_FONT), sg.Cancel(font=DEFAULT_FONT)]]
-
-        dialog = sg.Window("Confirm Choice", dialog_layout, keep_on_top=True, finalize=True)
-
-        while True:
-            event, values = dialog.read()
-
-            if event == sg.WINDOW_CLOSED or event == "Cancel":
-                dialog.close()
-                return False
-            elif event == "OK":
-                dialog.close()
-                return True
-    finally:
-        # Re-enable the main window
-        # window.enable() # Works on Windows, breaks on Linux
-        window.force_focus()
 
 # ###########################################################################
 # UI Event Loop
