@@ -7,12 +7,29 @@ It presents a simple GUI that helps users classify images from the camera.
 """
 import json
 import os
+import platform
 import time
 from datetime import datetime
 
 # import numpy as np
 import cv2 as cv
 import PySimpleGUI as sg
+
+from gtts import gTTS
+from playsound import playsound
+
+def text_to_speech(text):
+    tts = gTTS(text=text, lang='en')
+    filename = "speech.mp3"
+    tts.save(filename)
+    platform_name = platform.system()
+    if (platform_name == "Windows"):
+        os.system(f"start {filename}")
+    elif (platform_name == "Linux"):
+        os.system(f"aplay {filename}")
+    else:
+        print("Update script for how to play sound on %s" % platform_name)
+
 
 DEFAULT_FONT = ("Any", 16)
 LIST_HEIGHT = 12  # Number of rows in listbox element
@@ -419,6 +436,7 @@ def main_loop():
                 if confirm_choice(choice):
                     # Save the stored images to disk
                     save_images(last_captured_images, choice)
+                    text_to_speech("Hello, %s" % (choice['first_name']))
                     last_captured_images = []
                     last_captured_image_time = 0
                     set_ui_state(window, "WAITING")

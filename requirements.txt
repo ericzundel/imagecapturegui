@@ -10,7 +10,13 @@ opencv-python
 
 pysimplegui
 
+# For google drive backup
 google-api-python-client 
 google-auth-httplib2 
 google-auth-oauthlib
-# gpiozero
+
+# For speech synthesis
+gTTS
+
+wheel
+playsound=1.2.2
