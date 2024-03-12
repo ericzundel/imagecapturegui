@@ -25,7 +25,7 @@ def text_to_speech(text):
     if (platform_name == "Windows"):
         os.system(f"start {filename}")
     elif (platform_name == "Linux"):
-        os.system(f"aplay {filename}")
+        os.system(f"mpg123 {filename}")
     else:
         print("Update script for how to play sound on %s" % platform_name)
 
