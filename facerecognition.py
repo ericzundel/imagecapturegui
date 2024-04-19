@@ -1,10 +1,12 @@
 """GUI that loads the face recognition model and does prediction when button is pressed
 
-See model creation code at  https://colab.research.google.com/drive/1AdO1kHuEQfOWgx-fv5d9CbPYj2RmnpMU#scrollTo=2122e422
+See model creation code at
+https://colab.research.google.com/drive/1AdO1kHuEQfOWgx-fv5d9CbPYj2RmnpMU#scrollTo=2122e422
 """
 
 import os
 import platform
+import time
 
 # from tensorflow import keras
 # from tensorflow.keras import layers
@@ -21,7 +23,7 @@ import tensorflow as tf
 import numpy as np
 import cv2 as cv
 
-# import PySimpleGUI as sg
+import PySimpleGUI as sg
 
 from gtts import gTTS
 
@@ -38,8 +40,7 @@ LIST_WIDTH = 20  # Characters wide for listbox element
 DISPLAY_IMAGE_WIDTH = 120  # Size of image when displayed on screen
 DISPLAY_IMAGE_HEIGHT = 120
 
-# The proximity sensor won't trigger another picture unless this timer expires
-WAIT_FOR_NAMING_SECS = 15
+DISPLAY_TIMEOUT_SECS = 5
 
 student_labels = []
 
@@ -75,7 +76,6 @@ except RuntimeError as e:
         "You can achieve this by using 'sudo' to run your script",
     )
     raise e
-
 ##########################
 # Setup the Ultrasonic sensor pins
 if GPIO is not None:
@@ -85,9 +85,9 @@ if GPIO is not None:
 
     # Setup IO pin for button
     GPIO.setup(push_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
 ############################################################################
 # ML code
+
 
 def tensor_from_image(img):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -108,6 +108,7 @@ def tensor_from_image(img):
     print(arr.shape)
     return new_arr
 
+
 def predict(model, tensor):
     test_tensors = np.array(tensor)
     print("Predict: Test tensor shape")
@@ -121,9 +122,10 @@ def pretty_print_predictions(prediction):
     for i, prob in enumerate(prediction_arr):
         print("%37s: %2.2f%%" % (student_labels[i], prob * 100.0))
 
+
 #############################################################################
 #  GUI code
-def build_window(list_values):
+def build_window():
     """Builds the user interface and pops it up on the screen.
 
     Returns: sg.Window object
@@ -141,8 +143,14 @@ def build_window(list_values):
     )
     right_column = sg.Column(
         [
-            [sg.Label("Name: ", font=DEFAULT_FONT), sg.Label(key="-FACE_NAME-", font=DEFAULT_FONT))],
-            [sg.Label("Certainty: ", font=DEFAULT_FONT), sg.Label(key="-CERTAINTY-", font=DEFAULT_FONT))],
+            [
+                sg.Text("Name: ", font=DEFAULT_FONT),
+                sg.Text(key="-FACE_NAME-", font=DEFAULT_FONT),
+            ],
+            [
+                sg.Text("Certainty: ", font=DEFAULT_FONT),
+                sg.Text(key="-CERTAINTY-", font=DEFAULT_FONT),
+            ],
             [sg.Button("Cancel", key="-CANCEL-", font=DEFAULT_FONT)],
         ],
         key="-RIGHT_COLUMN-",
@@ -183,59 +191,64 @@ def set_ui_state(window, state, face_name=None, certainty=None):
         # Show manual capture button
         window["-STATUS-"].update("Waiting to Capture")
         window["-CAPTURE-"].update(visible=True)
-         window["-RIGHT_COLUMN-"].update(visible=False)
+        window["-RIGHT_COLUMN-"].update(visible=False)
         window["-LEFT_COLUMN-"].expand(True, True)
-
     elif state == "CAPTURING":
         # Hide Manual capture button
         window["-STATUS-"].update("Running ML prediction")
         window["-CAPTURE-"].update(visible=False)
-
     elif state == "NAMING":
         # Turn on the right column
         window["-STATUS-"].update("Displaying Result")
         window["-RIGHT_COLUMN-"].update(visible=True)
         window["-FACE_NAME-"].update(face_name)
-        window["-CERTAINTY-"].update(certainty)
+        window["-CERTAINTY-"].update("%2f" % (certainty * 100.0))
         window["-CAPTURE-"].update(visible=False)
-     else:
+    else:
         raise RuntimeError("Invalid state %s" % state)
 
 
 def main_loop():
-    """ UI Event Loop
+    """UI Event Loop
 
     This loop executes until someone closes the main window.
     """
 
     last_captured_image_time = 0
 
-   while True:
+    while True:
         # Check for a trigger 4x a second
         event, values = window.read(timeout=50)
+
+        # check for a timeout, send the GUI back to WAITING mode
+        if (
+            last_captured_image_time > 0
+            and time.monotonic() - last_captured_image_time > DISPLAY_TIMEOUT_SECS
+        ):
+            set_ui_state(window, "WAITING")
+            last_captured_image_time = 0
 
         # Every time something happens in the UI, it returns an event.
         # By decoding this event you can figure out what happened and take
         # an action.
         if event in (sg.WIN_CLOSED, "Exit"):  # always check for closed window
             break
-
         # If the user doesn't want to classify this image, the cancel button
         # will clear out the state.
         if event == "-CANCEL-":
             set_ui_state(window, "WAITING")
-
         # Check to see if we are to capture new images by checking the
         # proximity sensor hardware or if the button was pressed
         if check_button() or event == "-CAPTURE-":
             set_ui_state(window, "CAPTURING")
-            name, certainty =  capture_and_predict()
             last_captured_image_time = time.monotonic()
+            name, certainty = capture_and_predict()
             set_ui_state(window, "NAMING", face_name=name, certainty=certainty)
 
 
 ###########################################################
 # Other functions
+
 
 def check_button():
     """There is a button attached to GPIO21. See if it is low"""
@@ -243,6 +256,7 @@ def check_button():
         if GPIO.input(push_button_pin) == GPIO.LOW:
             return True
     return False
+
 
 def capture_image():
     """Captures a single image from the camera
@@ -259,10 +273,11 @@ def capture_image():
 
 
 def load_labels():
-    """Load the list of labels from the json file that correspond to the model outputs"""
+    """Load the labels from the json file that correspond to the model outputs"""
     labels_filename = os.path.join(MODEL_PATHNAME, "student_recognition_labels.json")
     labels_file = open(labels_filename)
     return json.load(labels_file)
+
 
 def text_to_speech(text):
     tts = gTTS(text=text, lang="en")
@@ -275,6 +290,7 @@ def text_to_speech(text):
         os.system(f"aplay {filename}")
     else:
         print("Update script for how to play sound on %s" % platform_name)
+
 
 def capture_and_predict():
     """Grab an image and run it through the ML model
@@ -294,12 +310,17 @@ def capture_and_predict():
 
     # Display the entry with the highest probability
     highest_prediction_index = prediction.numpy().argmax()
-    certainty = prediction[highest_prediction_index]
+    certainty = float(prediction[highest_prediction_index])
     print(
-        "Prediction %d %s  Probability: %0.2f"
-        % (highest_prediction_index, student_labels[highest_prediction_index], certainty)
+        "Prediction %d %s  Certainty: %0.2f"
+        % (
+            highest_prediction_index,
+            student_labels[highest_prediction_index],
+            certainty,
+        )
     )
     return student_labels[highest_prediction_index], certainty
+
 
 #####
 #
@@ -313,6 +334,12 @@ camera = cv.VideoCapture(0)
 # Important: Turn off the buffer on the camera. Otherwise, you get stale images
 camera.set(cv.CAP_PROP_BUFFERSIZE, 1)
 
+
+# Create and display the main UI
+window = build_window()
+set_ui_state(window, "WAITING")
+
+
 #####################################################################
 # Initialize the Machine Learning model. This takes some time (about 20 seconds)
 print("Tensorflow Version" + tf.__version__)
@@ -324,16 +351,12 @@ model = tf.keras.models.load_model(
 # Sanity check the model after loading
 model.summary()
 
-
-
 try:
     main_loop()
 except BaseException as e:
     print("Exiting due to %s" % str(e))
-
 # When everything done, release resources.
 window.close()
 camera.release()
 if proximity_sensor is not None:
     proximity_sensor.deinit()
-
