@@ -140,7 +140,7 @@ def predict_lite(interpreter, tensor):
     output_details = interpreter.get_output_details()
 
     # Set the tensor to point to the input data to be inferred
-    interpreter.set_tensor(input_details[0]["index"], tensor)
+    interpreter.set_tensor(input_details[0]["index"], np.float32(tensor))
 
     # Run the inference
     interpreter.invoke()
