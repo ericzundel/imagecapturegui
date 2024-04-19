@@ -16,7 +16,7 @@ import cv2 as cv
 import PySimpleGUI as sg
 
 from gtts import gTTS
-from playsound import playsound
+#from playsound import playsound
 
 def text_to_speech(text):
     tts = gTTS(text=text, lang='en')

@@ -5,3 +5,5 @@ credentials.json
 token.json
 images/*/
 __pycache__/
+speech.mp3
+2024_model/student_recognition.tf/
