@@ -138,9 +138,13 @@ def predict_lite(interpreter, tensor):
     # Get input and output tensors.
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
+   
+    test_tensors = np.array(np.float32(tensor)) 
+    print("Predict: Test tensor shape")
+    print(test_tensors.shape)
 
     # Set the tensor to point to the input data to be inferred
-    interpreter.set_tensor(input_details[0]["index"], np.float32(tensor))
+    interpreter.set_tensor(input_details[0]["index"], np.array([test_tensors]))
 
     # Run the inference
     interpreter.invoke()
@@ -148,6 +152,7 @@ def predict_lite(interpreter, tensor):
     # Extract the output
     output_data = interpreter.get_tensor(output_details[0]["index"])
     print(output_data)
+    return output_data[0]
 
 
 def predict_full(model, tensor):
@@ -155,11 +160,9 @@ def predict_full(model, tensor):
     print("Predict: Test tensor shape")
     print(test_tensors.shape)
     prediction = model(np.array([tensor]))
-    return prediction[0]
-
+    return prediction[0].numpy()  # Convert from tensor to numpy
 
 def predict(model, interpreter, tensor):
-    import pdb; pdb.set_trace()
     if tensorflow_type == "FULL":
         return predict_full(model, tensor)
     elif tensorflow_type == "LITE":
@@ -167,7 +170,7 @@ def predict(model, interpreter, tensor):
 
 
 def pretty_print_predictions(prediction):
-    prediction_arr = prediction.numpy()
+    prediction_arr = prediction
     for i, prob in enumerate(prediction_arr):
         print("%37s: %2.2f%%" % (student_labels[i], prob * 100.0))
 
@@ -359,10 +362,11 @@ def capture_and_predict():
     # Run the image through the model to see which output it predicts
     prediction = predict(model, interpreter, tensor)
 
+    # import pdb; pdb.set_trace()
     pretty_print_predictions(prediction)
 
     # Display the entry with the highest probability
-    highest_prediction_index = prediction.numpy().argmax()
+    highest_prediction_index = prediction.argmax()
     certainty = float(prediction[highest_prediction_index])
     print(
         "Prediction %d %s  Certainty: %0.2f"
