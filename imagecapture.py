@@ -16,8 +16,6 @@ import cv2 as cv
 import PySimpleGUI as sg
 
 from gtts import gTTS
-from playsound import playsound
-
 
 DEFAULT_FONT = ("Any", 16)
 LIST_HEIGHT = 12  # Number of rows in listbox element

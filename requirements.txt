@@ -23,4 +23,3 @@ gTTS
 tensorflow-cpu==2.15.0  # to insure compatibility with Windows, use tensorflow-cpu
 #pyyaml
 #h5py
-
