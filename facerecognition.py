@@ -16,17 +16,18 @@ from gtts import gTTS
 
 tensorflow_type = None
 model = None
-interpretor = None
+interpreter = None
 
 try:
     import tensorflow as tf
-
     tensorflow_type = "FULL"
+    print("Loaded Tensorflow Full Version")
 except ModuleNotFoundError:
     try:
         import tflite_runtime.interpreter as tflite
 
         tensorflow_type = "LITE"
+        print("Loaded Tensorflow Lite")
     except ModuleNotFoundError:
         print("Cannot load either tensorflow or tflite_runtime modules")
         exit(1)
@@ -93,8 +94,11 @@ if GPIO is not None:
 
 
 def load_model():
+    global model
+    global interpreter 
+
     if tensorflow_type == "FULL":
-        print("Tensorflow Version" + tf.__version__)
+        print("Initializing Tensorflow Version" + tf.__version__)
 
         model = tf.keras.models.load_model(
             os.path.join(MODEL_PATHNAME, "student_recognition.tf")
@@ -102,7 +106,7 @@ def load_model():
         # Sanity check the model after loading
         model.summary()
     elif tensorflow_type == "LITE":
-        print("Tensorflow Lite")
+        print("Initializing Tensorflow Lite")
         # Load the TFLite model
         interpreter = tflite.Interpreter(
             model_path=os.path.join(MODEL_PATHNAME, "student_recognition.tflite")
@@ -130,6 +134,7 @@ def tensor_from_image(img):
 
 
 def predict_lite(interpreter, tensor):
+
     # Get input and output tensors.
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
@@ -153,11 +158,12 @@ def predict_full(model, tensor):
     return prediction[0]
 
 
-def predict(model, tensor):
+def predict(model, interpreter, tensor):
+    import pdb; pdb.set_trace()
     if tensorflow_type == "FULL":
         return predict_full(model, tensor)
     elif tensorflow_type == "LITE":
-        return predict_lite(interpretor, tensor)
+        return predict_lite(interpreter, tensor)
 
 
 def pretty_print_predictions(prediction):
@@ -351,7 +357,7 @@ def capture_and_predict():
     tensor = tensor / 255.0
 
     # Run the image through the model to see which output it predicts
-    prediction = predict(model, tensor)
+    prediction = predict(model, interpreter, tensor)
 
     pretty_print_predictions(prediction)
 
