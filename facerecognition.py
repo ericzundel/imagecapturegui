@@ -18,7 +18,10 @@ from tensorflow.keras.utils import img_to_array
 
 # from tensorflow.keras.utils import array_to_img
 # import matplotlib.pyplot as plt
-import tensorflow as tf
+try:
+    import tensorflow as tf
+except ModuleNotFoundError:
+    import tflite_runtime.interpreter as tf
 
 import numpy as np
 import cv2 as cv
