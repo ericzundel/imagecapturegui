@@ -14,7 +14,7 @@ import time
 # import numpy as np
 # import os, shutil, pathlib
 # from tensorflow.keras.utils import load_img
-from tensorflow.keras.utils import img_to_array
+#from tensorflow.keras.utils import img_to_array
 
 # from tensorflow.keras.utils import array_to_img
 # import matplotlib.pyplot as plt
@@ -97,7 +97,8 @@ def tensor_from_image(img):
     rgb_gray = cv.cvtColor(gray, cv.COLOR_GRAY2BGR)
     # small_image = cv.resize(rgb_gray,
     #                   (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT))
-    arr = img_to_array(rgb_gray)
+    # arr = img_to_array(rgb_gray)  #Only available with full tensorflow
+    arr = my_img_to_arr(rgb_gray)
     arr = np.resize(
         arr, (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT, 3)
     )
@@ -125,6 +126,8 @@ def pretty_print_predictions(prediction):
     for i, prob in enumerate(prediction_arr):
         print("%37s: %2.2f%%" % (student_labels[i], prob * 100.0))
 
+def my_img_to_arr(image):
+    return np.expand_dims(image, axis=0)
 
 #############################################################################
 #  GUI code
