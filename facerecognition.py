@@ -7,30 +7,30 @@ https://colab.research.google.com/drive/1AdO1kHuEQfOWgx-fv5d9CbPYj2RmnpMU#scroll
 import os
 import platform
 import time
-
-# from tensorflow import keras
-# from tensorflow.keras import layers
-# from tensorflow.keras.datasets import imdb
-# import numpy as np
-# import os, shutil, pathlib
-# from tensorflow.keras.utils import load_img
-#from tensorflow.keras.utils import img_to_array
-
-# from tensorflow.keras.utils import array_to_img
-# import matplotlib.pyplot as plt
-try:
-    import tensorflow as tf
-except ModuleNotFoundError:
-    import tflite_runtime.interpreter as tf
+import json
 
 import numpy as np
 import cv2 as cv
-
 import PySimpleGUI as sg
-
 from gtts import gTTS
 
-import json
+tensorflow_type = None
+model = None
+interpretor = None
+
+try:
+    import tensorflow as tf
+
+    tensorflow_type = "FULL"
+except ModuleNotFoundError:
+    try:
+        import tflite_runtime.interpreter as tflite
+
+        tensorflow_type = "LITE"
+    except ModuleNotFoundError:
+        print("Cannot load either tensorflow or tflite_runtime modules")
+        exit(1)
+
 
 FACE_RECOGNITION_IMAGE_WIDTH = 50
 FACE_RECOGNITION_IMAGE_HEIGHT = 50
@@ -92,12 +92,28 @@ if GPIO is not None:
 # ML code
 
 
+def load_model():
+    if tensorflow_type == "FULL":
+        print("Tensorflow Version" + tf.__version__)
+
+        model = tf.keras.models.load_model(
+            os.path.join(MODEL_PATHNAME, "student_recognition.tf")
+        )
+        # Sanity check the model after loading
+        model.summary()
+    elif tensorflow_type == "LITE":
+        print("Tensorflow Lite")
+        # Load the TFLite model
+        interpreter = tflite.Interpreter(
+            model_path=os.path.join(MODEL_PATHNAME, "student_recognition.tflite")
+        )
+        interpreter.allocate_tensors()
+
+
 def tensor_from_image(img):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    # Make sure we get back to triplets for RGB to match our model
     rgb_gray = cv.cvtColor(gray, cv.COLOR_GRAY2BGR)
-    # small_image = cv.resize(rgb_gray,
-    #                   (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT))
-    # arr = img_to_array(rgb_gray)  #Only available with full tensorflow
     arr = my_img_to_arr(rgb_gray)
     arr = np.resize(
         arr, (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT, 3)
@@ -113,7 +129,23 @@ def tensor_from_image(img):
     return new_arr
 
 
-def predict(model, tensor):
+def predict_lite(interpreter, tensor):
+    # Get input and output tensors.
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+    # Set the tensor to point to the input data to be inferred
+    interpreter.set_tensor(input_details[0]["index"], tensor)
+
+    # Run the inference
+    interpreter.invoke()
+
+    # Extract the output
+    output_data = interpreter.get_tensor(output_details[0]["index"])
+    print(output_data)
+
+
+def predict_full(model, tensor):
     test_tensors = np.array(tensor)
     print("Predict: Test tensor shape")
     print(test_tensors.shape)
@@ -121,13 +153,22 @@ def predict(model, tensor):
     return prediction[0]
 
 
+def predict(model, tensor):
+    if tensorflow_type == "FULL":
+        return predict_full(model, tensor)
+    elif tensorflow_type == "LITE":
+        return predict_lite(interpretor, tensor)
+
+
 def pretty_print_predictions(prediction):
     prediction_arr = prediction.numpy()
     for i, prob in enumerate(prediction_arr):
         print("%37s: %2.2f%%" % (student_labels[i], prob * 100.0))
 
+
 def my_img_to_arr(image):
     return np.expand_dims(image, axis=0)
+
 
 #############################################################################
 #  GUI code
@@ -348,14 +389,8 @@ set_ui_state(window, "WAITING")
 
 #####################################################################
 # Initialize the Machine Learning model. This takes some time (about 20 seconds)
-print("Tensorflow Version" + tf.__version__)
+load_model()
 
-model = tf.keras.models.load_model(
-    os.path.join(MODEL_PATHNAME, "student_recognition.tf")
-)
-
-# Sanity check the model after loading
-model.summary()
 
 try:
     main_loop()
