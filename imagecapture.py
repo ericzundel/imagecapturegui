@@ -16,19 +16,7 @@ import cv2 as cv
 import PySimpleGUI as sg
 
 from gtts import gTTS
-#from playsound import playsound
-
-def text_to_speech(text):
-    tts = gTTS(text=text, lang='en')
-    filename = "speech.mp3"
-    tts.save(filename)
-    platform_name = platform.system()
-    if (platform_name == "Windows"):
-        os.system(f"start {filename}")
-    elif (platform_name == "Linux"):
-        os.system(f"aplay {filename}")
-    else:
-        print("Update script for how to play sound on %s" % platform_name)
+from playsound import playsound
 
 
 DEFAULT_FONT = ("Any", 16)
@@ -100,7 +88,6 @@ camera.set(cv.CAP_PROP_BUFFERSIZE, 1)
 
 ####################################################################
 # GUI Setup
-
 
 def format_choice(choice_elem):
     """Format one element of the JSON array for display.
@@ -361,6 +348,18 @@ def confirm_choice(choice):
         return True
     return False
 
+
+def text_to_speech(text):
+    tts = gTTS(text=text, lang='en')
+    filename = "speech.mp3"
+    tts.save(filename)
+    platform_name = platform.system()
+    if (platform_name == "Windows"):
+        os.system(f"start {filename}")
+    elif (platform_name == "Linux"):
+        os.system(f"aplay {filename}")
+    else:
+        print("Update script for how to play sound on %s" % platform_name)
 
 # ###########################################################################
 # UI Event Loop
