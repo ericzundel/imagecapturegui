@@ -11,10 +11,11 @@ import os
 import platform
 import time
 import json
+import traceback
 
 import numpy as np
 import cv2 as cv
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import PySimpleGUI as sg
 from gtts import gTTS
 
@@ -130,10 +131,10 @@ def tensor_from_image(img):
     img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT))
     arr = my_img_to_arr(img) / 255.0
 
-    print("Shape of array is: ")
-    print(arr.shape)
-    plt.imshow(arr)
-    plt.show()
+    # print("Shape of array is: ")
+    # print(arr.shape)
+    # plt.imshow(arr)
+    # plt.show()
 
     return arr
 
@@ -317,6 +318,7 @@ def main_loop():
             last_captured_image_time = time.monotonic()
             name, certainty = capture_and_predict()
             set_ui_state(window, "NAMING", face_name=name, certainty=certainty)
+            #text_to_speech(first_name)
 
 
 ###########################################################
@@ -352,13 +354,13 @@ def load_labels():
 
 
 def text_to_speech(text):
-    tts = gTTS(text=text, lang="en")
+    tts = gTTS(text=text, lang='en')
     filename = "speech.mp3"
     tts.save(filename)
     platform_name = platform.system()
-    if platform_name == "Windows":
+    if (platform_name == "Windows"):
         os.system(f"start {filename}")
-    elif platform_name == "Linux":
+    elif (platform_name == "Linux"):
         os.system(f"aplay {filename}")
     else:
         print("Update script for how to play sound on %s" % platform_name)
@@ -386,6 +388,11 @@ def do_predict(img):
             certainty,
         )
     )
+
+    # Say the name out loud
+    first_name = student_labels[highest_prediction_index].split(sep='_')[0]
+    text_to_speech("Hello, %s" % (first_name))
+
     return student_labels[highest_prediction_index], certainty
 
 def test_and_predict(image_filename):
@@ -427,7 +434,9 @@ load_model()
 try:
     main_loop()
 except BaseException as e:
-    print("Exiting due to %s" % str(e))
+    print("Exiting due to %s " % str(e))
+    print(traceback.format_exc())
+
 # When everything done, release resources.
 window.close()
 camera.release()
