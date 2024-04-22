@@ -339,6 +339,8 @@ def capture_image():
     Returns: image buffer
     """
 
+    status, frame = camera.read()  
+    # Throw away the previous frame, it might be cached
     status, frame = camera.read()
 
     if not status:
