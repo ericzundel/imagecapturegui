@@ -296,13 +296,6 @@ def main_loop():
             set_ui_state(window, "WAITING")
             last_captured_image_time = 0
 
-        # FOR DEBUGGING
-        # Try some test images
-        if event == "-TEST_IMAGE1-":
-            test_and_predict(TEST_IMAGE1)
-        if event == "-TEST_IMAGE2-":
-            test_and_predict(TEST_IMAGE2)
-
         # Every time something happens in the UI, it returns an event.
         # By decoding this event you can figure out what happened and take
         # an action.
@@ -314,12 +307,18 @@ def main_loop():
             set_ui_state(window, "WAITING")
         # Check to see if we are to capture new images by checking the
         # proximity sensor hardware or if the button was pressed
-        if check_button() or event == "-CAPTURE-":
+        if check_button() or event == "-CAPTURE-" or event == "-TEST_IMAGE1-" or event == "-TEST_IMAGE2-":
             set_ui_state(window, "CAPTURING")
             last_captured_image_time = time.monotonic()
-            name, certainty = capture_and_predict()
+            # FOR DEBUGGING
+            # Try some test images
+            if event == "-TEST_IMAGE1-":
+                name, certainty = test_and_predict(TEST_IMAGE1)
+            elif event == "-TEST_IMAGE2-":
+                name, certainty = test_and_predict(TEST_IMAGE2)
+            else:
+                name, certainty = capture_and_predict()
             set_ui_state(window, "NAMING", face_name=name, certainty=certainty)
-            #text_to_speech(first_name)
 
 
 ###########################################################
