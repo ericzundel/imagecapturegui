@@ -30,7 +30,8 @@ try:
     print("Loaded Tensorflow Full Version")
 except ModuleNotFoundError:
     try:
-        import tflite_runtime as tflite
+        #import tflite_runtime
+        import tflite_runtime.interpreter as tflite_runtime
         tensorflow_type = "LITE"
         print("Loaded Tensorflow Lite")
     except ModuleNotFoundError:
@@ -116,7 +117,7 @@ def load_model():
     elif tensorflow_type == "LITE":
         print("Initializing Tensorflow Lite")
         # Load the TFLite model
-        interpreter = tflite.interpreter.Interpreter(
+        interpreter = tflite_runtime.Interpreter(
             model_path=os.path.join(MODEL_PATHNAME, "student_recognition.tflite")
         )
         interpreter.allocate_tensors()
