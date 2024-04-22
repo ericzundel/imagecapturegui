@@ -8,7 +8,7 @@ opencv-python
 #opencv-python==4.6.0.66
 #opencv-python==4.7.0.72 might also work
 
-pysimplegui
+pysimplegui==4
 
 # For google drive backup
 google-api-python-client 
@@ -18,9 +18,13 @@ google-auth-oauthlib
 # For speech synthesis
 gTTS
 
+#mathplotlib
+# Had to rebuild mathplotlib for python 3.11
+#  python -m pip install   --upgrade   --pre   --index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple   --extra-index-url https://pypi.org/simple   matplotlib
+
 # To do image recognition with trained model
 # conda install -c conda-forge cudatoolkit=11.2 cudnn=8.1.0
 #tensorflow-cpu==2.15.0  # to insure compatibility with Windows, use tensorflow-cpu
-tflite-runtime
+#tflite-runtime
 #pyyaml
 #h5py

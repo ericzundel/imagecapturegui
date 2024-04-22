@@ -66,3 +66,10 @@ venv/bin/pip install -r requirements.txt
 ```
 
 After installing libraries, running `python imagecapture.py` should start the GUI
+
+
+## Running face recognition
+
+Getting face recognition to work is a battle of python versioning.  I used Python 3.11 on my Windows machine and tensorflow-cpu version 2.15.0 to match the version of Tensorflow on Google Colab. Since there is little control over versioning, you'll likely run into issues if you try to run a model on another machine created with Google Colab.
+
+I used the .tf format and it seemed to be compatible at the time, but not if you install Tensorflow 2.16.0!

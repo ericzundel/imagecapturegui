@@ -2,6 +2,9 @@
 
 See model creation code at
 https://colab.research.google.com/drive/1AdO1kHuEQfOWgx-fv5d9CbPYj2RmnpMU#scrollTo=2122e422
+
+See example for using tflite on raspberry pi at:
+https://github.com/tensorflow/examples/blob/master/lite/examples/object_detection/raspberry_pi
 """
 
 import os
@@ -11,12 +14,14 @@ import json
 
 import numpy as np
 import cv2 as cv
+import matplotlib.pyplot as plt
 import PySimpleGUI as sg
 from gtts import gTTS
 
 tensorflow_type = None
 model = None
 interpreter = None
+vision = None
 
 try:
     import tensorflow as tf
@@ -24,8 +29,7 @@ try:
     print("Loaded Tensorflow Full Version")
 except ModuleNotFoundError:
     try:
-        import tflite_runtime.interpreter as tflite
-
+        import tflite_runtime as tflite
         tensorflow_type = "LITE"
         print("Loaded Tensorflow Lite")
     except ModuleNotFoundError:
@@ -33,9 +37,11 @@ except ModuleNotFoundError:
         exit(1)
 
 
-FACE_RECOGNITION_IMAGE_WIDTH = 50
-FACE_RECOGNITION_IMAGE_HEIGHT = 50
+FACE_RECOGNITION_IMAGE_WIDTH = 100
+FACE_RECOGNITION_IMAGE_HEIGHT = 100
 MODEL_PATHNAME = "./2024model/"
+TEST_IMAGE1 = os.path.join(MODEL_PATHNAME, "donald_test.png")
+TEST_IMAGE2 = os.path.join(MODEL_PATHNAME, "laila_test.png")
 
 DEFAULT_FONT = ("Any", 16)
 LIST_HEIGHT = 12  # Number of rows in listbox element
@@ -89,13 +95,14 @@ if GPIO is not None:
 
     # Setup IO pin for button
     GPIO.setup(push_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+
 ############################################################################
 # ML code
 
-
 def load_model():
     global model
-    global interpreter 
+    global interpreter
 
     if tensorflow_type == "FULL":
         print("Initializing Tensorflow Version" + tf.__version__)
@@ -108,29 +115,27 @@ def load_model():
     elif tensorflow_type == "LITE":
         print("Initializing Tensorflow Lite")
         # Load the TFLite model
-        interpreter = tflite.Interpreter(
+        interpreter = tflite.interpreter.Interpreter(
             model_path=os.path.join(MODEL_PATHNAME, "student_recognition.tflite")
         )
         interpreter.allocate_tensors()
 
 
 def tensor_from_image(img):
-    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     # Make sure we get back to triplets for RGB to match our model
-    rgb_gray = cv.cvtColor(gray, cv.COLOR_GRAY2BGR)
-    arr = my_img_to_arr(rgb_gray)
-    arr = np.resize(
-        arr, (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT, 3)
-    )
-    print("Shape of array is: ")
-    print(arr.shape)
-    new_arr = arr.reshape(
-        (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT, 3)
-    )
+    img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
+    # Tensorflow lite requires RGB colorspace
+    # img = cv# .cvtColor(img, cv.COLOR_BGR2RGB)
+    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT))
+    arr = my_img_to_arr(img) / 255.0
 
     print("Shape of array is: ")
     print(arr.shape)
-    return new_arr
+    plt.imshow(arr)
+    plt.show()
+
+    return arr
 
 
 def predict_lite(interpreter, tensor):
@@ -138,8 +143,8 @@ def predict_lite(interpreter, tensor):
     # Get input and output tensors.
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
-   
-    test_tensors = np.array(np.float32(tensor)) 
+
+    test_tensors = np.array(tensor)
     print("Predict: Test tensor shape")
     print(test_tensors.shape)
 
@@ -176,8 +181,11 @@ def pretty_print_predictions(prediction):
 
 
 def my_img_to_arr(image):
-    return np.expand_dims(image, axis=0)
-
+    # return np.expand_dims(image, axis=0)
+    if tensorflow_type == "FULL":
+        return tf.keras.utils.img_to_array(image)
+    elif tensorflow_type == "LITE":
+        return np.asarray(image, dtype=np.float32)
 
 #############################################################################
 #  GUI code
@@ -188,11 +196,13 @@ def build_window():
     """
     left_column = sg.Column(
         [
-            [sg.Text(size=(18, 1), key="-STATUS-", font=DEFAULT_FONT)],
+            [sg.Text("", size=(18, 1), key="-STATUS-", font=DEFAULT_FONT)],
             [sg.pin(sg.Button("Manual Capture", key="-CAPTURE-", font=DEFAULT_FONT))],
             [sg.Text()],  # vertical spacer
             [sg.Text()],  # vertical spacer
             [sg.Text()],  # vertical spacer
+            [sg.Button("Test Donald", key="-TEST_IMAGE1-", font=("Any", 10))],
+            [sg.Button("Test Laila", key="-TEST_IMAGE2-", font=("Any", 10))],
             [sg.Button("Exit", font=("Any", 6))],
         ],
         key="-LEFT_COLUMN-",
@@ -284,6 +294,13 @@ def main_loop():
             set_ui_state(window, "WAITING")
             last_captured_image_time = 0
 
+        # FOR DEBUGGING
+        # Try some test images
+        if event == "-TEST_IMAGE1-":
+            test_and_predict(TEST_IMAGE1)
+        if event == "-TEST_IMAGE2-":
+            test_and_predict(TEST_IMAGE2)
+
         # Every time something happens in the UI, it returns an event.
         # By decoding this event you can figure out what happened and take
         # an action.
@@ -304,7 +321,6 @@ def main_loop():
 
 ###########################################################
 # Other functions
-
 
 def check_button():
     """There is a button attached to GPIO21. See if it is low"""
@@ -347,17 +363,11 @@ def text_to_speech(text):
     else:
         print("Update script for how to play sound on %s" % platform_name)
 
-
-def capture_and_predict():
-    """Grab an image and run it through the ML model
-
-    Returns: predicted_name, certainty  where certainty is a value between 0 and 1.0
-    """
-    # Grab an image from the camera and transform it to a tensor to feed into the model
-    img = capture_image()
+def do_predict(img):
     tensor = tensor_from_image(img)
-    # Normalize to keras image format which use datapoints with float values from 0-1.0
-    tensor = tensor / 255.0
+
+    print("tensor is:")
+    print(tensor)
 
     # Run the image through the model to see which output it predicts
     prediction = predict(model, interpreter, tensor)
@@ -378,6 +388,19 @@ def capture_and_predict():
     )
     return student_labels[highest_prediction_index], certainty
 
+def test_and_predict(image_filename):
+    img = cv.imread(image_filename, cv.IMREAD_COLOR)
+    # cv.imshow('image', img)
+    return do_predict(img)
+
+def capture_and_predict():
+    """Grab an image and run it through the ML model
+
+    Returns: predicted_name, certainty  where certainty is a value between 0 and 1.0
+    """
+    # Grab an image from the camera and transform it to a tensor to feed into the model
+    img = capture_image()
+    return do_predict(img)
 
 #####
 #
@@ -400,7 +423,6 @@ set_ui_state(window, "WAITING")
 #####################################################################
 # Initialize the Machine Learning model. This takes some time (about 20 seconds)
 load_model()
-
 
 try:
     main_loop()
