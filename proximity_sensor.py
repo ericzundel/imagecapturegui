@@ -1,5 +1,12 @@
-"""Test code to read from the echo sensor and capture an image"""
+""" Module to use an Ultrasonic sensor to detect when someone is walking by.
 
+Intended to be used with an Ultrasonic sensor attached to a 
+Raspberry Pi on a GPIO port.
+
+NB(ericzundel) I made this kind of complicated to try and get it to 
+reliably detect a person. It worked, but it wasn't reliable enough for 
+us to use.
+"""
 from threading import Thread, Lock
 import time
 

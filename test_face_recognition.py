@@ -27,8 +27,8 @@ from gtts import gTTS
 
 import json
 
-FACE_RECOGNITION_IMAGE_WIDTH = 50
-FACE_RECOGNITION_IMAGE_HEIGHT = 50
+FACE_RECOGNITION_IMAGE_WIDTH = 100
+FACE_RECOGNITION_IMAGE_HEIGHT = 100
 MODEL_PATHNAME = "./2024model/"
 
 student_labels = []
@@ -74,7 +74,7 @@ def tensor_from_image(img):
 
     print("Shape of array is: ")
     print(arr.shape)
-    return new_arr
+    return np.float32(new_arr)
 
 
 def capture_image():
@@ -120,7 +120,7 @@ camera.set(cv.CAP_PROP_BUFFERSIZE, 1)
 print("Tensorflow Version" + tf.__version__)
 
 model = tf.keras.models.load_model(
-    os.path.join(MODEL_PATHNAME, "student_recognition.tf")
+    os.path.join(MODEL_PATHNAME, "student_recognition_2024_32bit.tf")
 )
 
 # Sanity check the model after loading

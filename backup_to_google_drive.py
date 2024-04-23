@@ -1,3 +1,7 @@
+"""Backup caputured image data to Google Drive. 
+
+Intended to be called from cron for a periodic backup
+"""
 import os
 from datetime import datetime
 

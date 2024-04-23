@@ -5,6 +5,12 @@ This project is a UI for a
 classroom project that captures images using OpenCV that will be used as
 a database for a segment of machine learning.
 
+imagecapture.py - A UI for capturing data from the Raspberry Pi camera and storing it
+facerecognition.py - a UI for trying to recognize an image using a pre-trained model
+backup_to_google_drive.py - A job run from cron to occasionally backup captured image data
+convert_model_to_tflite.py - A script to convert a trained model from keras to Tensorflow Lite format
+
+
 ## Details
 
 - A workstation/Raspberry Pi will be setup at the entrance to the classroom. ![Setup at entrance to classroom](https://raw.githubusercontent.com/ericzundel/imagecapturegui/main/CameraAndButton.png)

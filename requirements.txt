@@ -1,3 +1,6 @@
+# Note: This file probably can't be used directly, but I used it
+# to try to keep track of all the dependencies.
+
 numpy
 # For raspberry pi binary install
 # numpy==1.24 
@@ -8,7 +11,9 @@ opencv-python
 #opencv-python==4.6.0.66
 #opencv-python==4.7.0.72 might also work
 
-pysimplegui==4
+# Boy do I regret using pysimplegui. They changed from open source
+# to a non-free license.  Future plan would be to use tkinter directly.
+pysimplegui
 
 # For google drive backup
 google-api-python-client 
@@ -18,13 +23,23 @@ google-auth-oauthlib
 # For speech synthesis
 gTTS
 
+# For debugging image conversions in facerecognition code
 #mathplotlib
 # Had to rebuild mathplotlib for python 3.11
 #  python -m pip install   --upgrade   --pre   --index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple   --extra-index-url https://pypi.org/simple   matplotlib
 
-# To do image recognition with trained model
+# In the end, I don't think I used conda...
 # conda install -c conda-forge cudatoolkit=11.2 cudnn=8.1.0
+
+####
+# Tensorflow library for face recognition with trained model
+
+# You'll need to use tensorflow-cpu on Windows
 #tensorflow-cpu==2.15.0  # to insure compatibility with Windows, use tensorflow-cpu
+# You'll need to use tflite-runtime on a Raspberry Pi 4 with the stock image
 #tflite-runtime
+
+# These dependencies might be needed if you change to use a different
+# save format for Tensorflow models
 #pyyaml
 #h5py
