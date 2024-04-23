@@ -118,7 +118,7 @@ def load_model():
         print("Initializing Tensorflow Lite")
         # Load the TFLite model
         interpreter = tflite_runtime.Interpreter(
-            model_path=os.path.join(MODEL_PATHNAME, "student_recognition.tflite")
+            model_path=os.path.join(MODEL_PATHNAME, "student_recognition_2024_32bit.tflite")
         )
         interpreter.allocate_tensors()
 
@@ -363,7 +363,7 @@ def text_to_speech(text):
     if (platform_name == "Windows"):
         os.system(f"start {filename}")
     elif (platform_name == "Linux"):
-        os.system(f"aplay {filename}")
+        os.system(f"mplayer {filename}")
     else:
         print("Update script for how to play sound on %s" % platform_name)
 
