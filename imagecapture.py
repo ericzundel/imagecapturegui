@@ -87,6 +87,7 @@ camera.set(cv.CAP_PROP_BUFFERSIZE, 1)
 ####################################################################
 # GUI Setup
 
+
 def format_choice(choice_elem):
     """Format one element of the JSON array for display.
 
@@ -348,16 +349,17 @@ def confirm_choice(choice):
 
 
 def text_to_speech(text):
-    tts = gTTS(text=text, lang='en')
+    tts = gTTS(text=text, lang="en")
     filename = "speech.mp3"
     tts.save(filename)
     platform_name = platform.system()
-    if (platform_name == "Windows"):
+    if platform_name == "Windows":
         os.system(f"start {filename}")
-    elif (platform_name == "Linux"):
+    elif platform_name == "Linux":
         os.system(f"mplayer {filename}")
     else:
         print("Update script for how to play sound on %s" % platform_name)
+
 
 # ###########################################################################
 # UI Event Loop
@@ -433,7 +435,7 @@ def main_loop():
                 if confirm_choice(choice):
                     # Save the stored images to disk
                     save_images(last_captured_images, choice)
-                    text_to_speech("Hello, %s" % (choice['first_name']))
+                    text_to_speech("Hello, %s" % (choice["first_name"]))
                     last_captured_images = []
                     last_captured_image_time = 0
                     set_ui_state(window, "WAITING")
