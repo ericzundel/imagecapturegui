@@ -15,9 +15,18 @@ import traceback
 
 import numpy as np
 import cv2 as cv
-#import matplotlib.pyplot as plt
+
+# import matplotlib.pyplot as plt
 import PySimpleGUI as sg
 from gtts import gTTS
+
+# This weird import code is so we can support both the full
+# Tensorflow library (linux, windows) and Tensorflow Lite
+# (linux).
+
+# Besides the fact that it is good for testing to try both versions,
+# Currently, Google doesn't make tensorflow Lite
+# binaries available for Windows.
 
 tensorflow_type = None
 model = None
@@ -26,24 +35,32 @@ vision = None
 
 try:
     import tensorflow as tf
+
     tensorflow_type = "FULL"
     print("Loaded Tensorflow Full Version")
 except ModuleNotFoundError:
     try:
-        #import tflite_runtime
         import tflite_runtime.interpreter as tflite_runtime
+
         tensorflow_type = "LITE"
         print("Loaded Tensorflow Lite")
     except ModuleNotFoundError:
         print("Cannot load either tensorflow or tflite_runtime modules")
         exit(1)
 
+###################################################################
+# Constants
 
 FACE_RECOGNITION_IMAGE_WIDTH = 100
 FACE_RECOGNITION_IMAGE_HEIGHT = 100
-MODEL_PATHNAME = "./2024model/"
-TEST_IMAGE1 = os.path.join(MODEL_PATHNAME, "donald_test.png")
-TEST_IMAGE2 = os.path.join(MODEL_PATHNAME, "laila_test.png")
+
+# Local path to find the model files
+MODEL_PATHNAME_BASE = "./2024model/"
+MODEL_FILENAME_BASE = "student_recognition_2024_32bit"
+LABEL_FILENAME = "student_recognition_labels.json"
+
+TEST_IMAGE1 = os.path.join(MODEL_PATHNAME_BASE, "donald_test.png")
+TEST_IMAGE2 = os.path.join(MODEL_PATHNAME_BASE, "laila_test.png")
 
 DEFAULT_FONT = ("Any", 16)
 LIST_HEIGHT = 12  # Number of rows in listbox element
@@ -53,8 +70,6 @@ DISPLAY_IMAGE_WIDTH = 120  # Size of image when displayed on screen
 DISPLAY_IMAGE_HEIGHT = 120
 
 DISPLAY_TIMEOUT_SECS = 5
-
-student_labels = []
 
 
 ####################################################################
@@ -70,7 +85,7 @@ student_labels = []
 #    proximity_sensor = None
 #    print("No proximity sensor detected")
 
-# Our sensor was unreliable...
+# Our sensor was unreliable, so short cicruit that code.
 proximity_sensor = None
 
 try:
@@ -102,6 +117,7 @@ if GPIO is not None:
 ############################################################################
 # ML code
 
+
 def load_model():
     global model
     global interpreter
@@ -110,7 +126,7 @@ def load_model():
         print("Initializing Tensorflow Version" + tf.__version__)
 
         model = tf.keras.models.load_model(
-            os.path.join(MODEL_PATHNAME, "student_recognition.tf")
+            os.path.join(MODEL_PATHNAME_BASE, "%s.tf" % (MODEL_FILENAME_BASE))
         )
         # Sanity check the model after loading
         model.summary()
@@ -118,7 +134,9 @@ def load_model():
         print("Initializing Tensorflow Lite")
         # Load the TFLite model
         interpreter = tflite_runtime.Interpreter(
-            model_path=os.path.join(MODEL_PATHNAME, "student_recognition_2024_32bit.tflite")
+            model_path=os.path.join(
+                MODEL_PATHNAME_BASE, "%s.tflite" % (MODEL_FILENAME_BASE)
+            )
         )
         interpreter.allocate_tensors()
 
@@ -169,6 +187,7 @@ def predict_full(model, tensor):
     prediction = model(np.array([tensor]))
     return prediction[0].numpy()  # Convert from tensor to numpy
 
+
 def predict(model, interpreter, tensor):
     if tensorflow_type == "FULL":
         return predict_full(model, tensor)
@@ -176,10 +195,10 @@ def predict(model, interpreter, tensor):
         return predict_lite(interpreter, tensor)
 
 
-def pretty_print_predictions(prediction):
+def pretty_print_predictions(prediction, labels):
     prediction_arr = prediction
     for i, prob in enumerate(prediction_arr):
-        print("%37s: %2.2f%%" % (student_labels[i], prob * 100.0))
+        print("%37s: %2.2f%%" % (labels[i], prob * 100.0))
 
 
 def my_img_to_arr(image):
@@ -188,6 +207,7 @@ def my_img_to_arr(image):
         return tf.keras.utils.img_to_array(image)
     elif tensorflow_type == "LITE":
         return np.asarray(image, dtype=np.float32)
+
 
 #############################################################################
 #  GUI code
@@ -276,7 +296,7 @@ def set_ui_state(window, state, face_name=None, certainty=None):
         raise RuntimeError("Invalid state %s" % state)
 
 
-def main_loop():
+def main_loop(labels):
     """UI Event Loop
 
     This loop executes until someone closes the main window.
@@ -307,22 +327,28 @@ def main_loop():
             set_ui_state(window, "WAITING")
         # Check to see if we are to capture new images by checking the
         # proximity sensor hardware or if the button was pressed
-        if check_button() or event == "-CAPTURE-" or event == "-TEST_IMAGE1-" or event == "-TEST_IMAGE2-":
+        if (
+            check_button()
+            or event == "-CAPTURE-"
+            or event == "-TEST_IMAGE1-"
+            or event == "-TEST_IMAGE2-"
+        ):
             set_ui_state(window, "CAPTURING")
             last_captured_image_time = time.monotonic()
             # FOR DEBUGGING
             # Try some test images
             if event == "-TEST_IMAGE1-":
-                name, certainty = test_and_predict(TEST_IMAGE1)
+                name, certainty = test_and_predict(TEST_IMAGE1, labels)
             elif event == "-TEST_IMAGE2-":
-                name, certainty = test_and_predict(TEST_IMAGE2)
+                name, certainty = test_and_predict(TEST_IMAGE2, labels)
             else:
-                name, certainty = capture_and_predict()
+                name, certainty = capture_and_predict(labels)
             set_ui_state(window, "NAMING", face_name=name, certainty=certainty)
 
 
 ###########################################################
 # Other functions
+
 
 def check_button():
     """There is a button attached to GPIO21. See if it is low"""
@@ -338,7 +364,7 @@ def capture_image():
     Returns: image buffer
     """
 
-    status, frame = camera.read()  
+    status, frame = camera.read()
     # Throw away the previous frame, it might be cached
     status, frame = camera.read()
 
@@ -350,24 +376,25 @@ def capture_image():
 
 def load_labels():
     """Load the labels from the json file that correspond to the model outputs"""
-    labels_filename = os.path.join(MODEL_PATHNAME, "student_recognition_labels.json")
-    labels_file = open(labels_filename)
-    return json.load(labels_file)
+    labels_filename = os.path.join(MODEL_PATHNAME_BASE, LABEL_FILENAME)
+    with open(labels_filename) as f:
+        return json.load(f)
 
 
 def text_to_speech(text):
-    tts = gTTS(text=text, lang='en')
+    tts = gTTS(text=text, lang="en")
     filename = "speech.mp3"
     tts.save(filename)
     platform_name = platform.system()
-    if (platform_name == "Windows"):
+    if platform_name == "Windows":
         os.system(f"start {filename}")
-    elif (platform_name == "Linux"):
+    elif platform_name == "Linux":
         os.system(f"mplayer {filename}")
     else:
         print("Update script for how to play sound on %s" % platform_name)
 
-def do_predict(img):
+
+def do_predict(img, labels):
     tensor = tensor_from_image(img)
 
     print("tensor is:")
@@ -377,7 +404,7 @@ def do_predict(img):
     prediction = predict(model, interpreter, tensor)
 
     # import pdb; pdb.set_trace()
-    pretty_print_predictions(prediction)
+    pretty_print_predictions(prediction, labels)
 
     # Display the entry with the highest probability
     highest_prediction_index = prediction.argmax()
@@ -386,34 +413,36 @@ def do_predict(img):
         "Prediction %d %s  Certainty: %0.2f"
         % (
             highest_prediction_index,
-            student_labels[highest_prediction_index],
+            labels[highest_prediction_index],
             certainty,
         )
     )
 
     # Say the name out loud
-    first_name = student_labels[highest_prediction_index].split(sep='_')[0]
+    first_name = labels[highest_prediction_index].split(sep="_")[0]
     text_to_speech("Hello, %s" % (first_name))
 
-    return student_labels[highest_prediction_index], certainty
+    return labels[highest_prediction_index], certainty
 
-def test_and_predict(image_filename):
+
+def test_and_predict(image_filename, labels):
     img = cv.imread(image_filename, cv.IMREAD_COLOR)
-    # cv.imshow('image', img)
-    return do_predict(img)
+    return do_predict(img, labels)
 
-def capture_and_predict():
+
+def capture_and_predict(labels):
     """Grab an image and run it through the ML model
 
     Returns: predicted_name, certainty  where certainty is a value between 0 and 1.0
     """
     # Grab an image from the camera and transform it to a tensor to feed into the model
     img = capture_image()
-    return do_predict(img)
+    return do_predict(img, labels)
+
 
 #####
 #
-student_labels = load_labels()
+labels = load_labels()
 
 ####################################################################
 # Setup OpenCV for reading from the camera
@@ -422,7 +451,6 @@ camera = cv.VideoCapture(0)
 
 # Important: Turn off the buffer on the camera. Otherwise, you get stale images
 camera.set(cv.CAP_PROP_BUFFERSIZE, 1)
-
 
 # Create and display the main UI
 window = build_window()
@@ -434,7 +462,7 @@ set_ui_state(window, "WAITING")
 load_model()
 
 try:
-    main_loop()
+    main_loop(labels)
 except BaseException as e:
     print("Exiting due to %s " % str(e))
     print(traceback.format_exc())

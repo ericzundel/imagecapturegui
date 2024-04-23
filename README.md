@@ -67,6 +67,9 @@ venv/bin/pip install -r requirements.txt
 
 After installing libraries, running `python imagecapture.py` should start the GUI
 
+## Connecting to Google Drive
+For backing up the data to google drive, you will need to save a file named 'credentials.json'
+Go through the Goole Workspace and create an API key. See [Google Workspace](https://developers.google.com/workspace/guides/create-credentials)
 
 ## Running face recognition
 
