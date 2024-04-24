@@ -6,4 +6,5 @@ token.json
 images/*/
 __pycache__/
 speech.mp3
-2024_model/student_recognition.tf/
+2024model/student_recognition.tf/
+2024model/student_recognition_2024_32bit.tf/
