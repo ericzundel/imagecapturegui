@@ -14,6 +14,8 @@ opencv-python
 # Boy do I regret using pysimplegui. They changed from open source
 # to a non-free license.  Future plan would be to use tkinter directly.
 pysimplegui
+# Popular alternative to pysimplegui is kivy
+kivy
 
 # For google drive backup
 google-api-python-client 
