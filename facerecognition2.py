@@ -228,6 +228,10 @@ def build_window():
     right_column = sg.Column(
         [
             [
+                sg.Text("Model: ", font=DEFAULT_FONT),
+                sg.Text(key="-MODEL_NAME-", font=DEFAULT_FONT),
+            ],
+            [
                 sg.Text("Name: ", font=DEFAULT_FONT),
                 sg.Text(key="-FACE_NAME-", font=DEFAULT_FONT),
             ],
@@ -285,6 +289,7 @@ def set_ui_state(window, state, face_name=None, certainty=None):
         # Turn on the right column
         window["-STATUS-"].update("Displaying Result")
         window["-RIGHT_COLUMN-"].update(visible=True)
+        window["-MODEL_NAME-"].update(MODEL_FILENAME_BASE)
         window["-FACE_NAME-"].update(face_name)
         window["-CERTAINTY-"].update("%2f" % (certainty * 100.0))
         window["-CAPTURE-"].update(visible=False)
