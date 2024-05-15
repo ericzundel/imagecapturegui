@@ -29,8 +29,9 @@ from gtts import gTTS
 # binaries available for Windows.
 
 tensorflow_type = None
-model = None
-interpreter = None
+names = []
+models = []
+interpreters = []
 vision = None
 
 try:
@@ -56,7 +57,12 @@ FACE_RECOGNITION_IMAGE_HEIGHT = 100
 
 # Local path to find the model files
 MODEL_PATHNAME_BASE = "./2024model/"
-MODEL_FILENAME_BASE = "Rhyland_student_recognition_2024_32bit"
+
+model_dict = {
+    'Rhyland': "Rhyland_student_recognition_2024_32bit",
+    'Laila' : "Laila_student_recognition_2024_32bit",
+    }
+
 LABEL_FILENAME = "student_recognition_labels.json"
 
 TEST_IMAGE1 = os.path.join(MODEL_PATHNAME_BASE, "donald_test.png")
@@ -117,29 +123,35 @@ if GPIO is not None:
 ############################################################################
 # ML code
 
-
 def load_model():
-    global model
-    global interpreter
+    global names
+    global models
+    global interpreters
 
+    names = list(model_dict.keys())
     if tensorflow_type == "FULL":
         print("Initializing Tensorflow Version" + tf.__version__)
+        for name in names:    
+            model = tf.keras.models.load_model(
+                os.path.join(MODEL_PATHNAME_BASE, "%s.tf" % (model_dict[name]))
+            )
+            models.append(model)
+            interpreters.append(None)
+            # Sanity check the model after loading
+            #model.summary()            
 
-        model = tf.keras.models.load_model(
-            os.path.join(MODEL_PATHNAME_BASE, "%s.tf" % (MODEL_FILENAME_BASE))
-        )
-        # Sanity check the model after loading
-        model.summary()
     elif tensorflow_type == "LITE":
         print("Initializing Tensorflow Lite")
-        # Load the TFLite model
-        interpreter = tflite_runtime.Interpreter(
-            model_path=os.path.join(
-                MODEL_PATHNAME_BASE, "%s.tflite" % (MODEL_FILENAME_BASE)
+        for name in names:                              
+            # Load the TFLite model
+            interpreter = tflite_runtime.Interpreter(
+                model_path=os.path.join(
+                    MODEL_PATHNAME_BASE, "%s.tflite" % (model_dict[name])
+                )
             )
-        )
-        interpreter.allocate_tensors()
-
+            interpreter.allocate_tensors()
+            interpreters.append(interpreter)
+            models.append(None)
 
 def tensor_from_image(img):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -229,16 +241,28 @@ def build_window():
         [
             [
                 sg.Text("Model: ", font=DEFAULT_FONT),
-                sg.Text(key="-MODEL_NAME-", font=DEFAULT_FONT),
+                sg.Text(key="-MODEL_NAME1-", font=DEFAULT_FONT),
             ],
             [
                 sg.Text("Name: ", font=DEFAULT_FONT),
-                sg.Text(key="-FACE_NAME-", font=DEFAULT_FONT),
+                sg.Text(key="-FACE_NAME1-", font=DEFAULT_FONT),
             ],
             [
                 sg.Text("Certainty: ", font=DEFAULT_FONT),
-                sg.Text(key="-CERTAINTY-", font=DEFAULT_FONT),
+                sg.Text(key="-CERTAINTY1-", font=DEFAULT_FONT),
             ],
+            [
+                sg.Text("Model: ", font=DEFAULT_FONT),
+                sg.Text(key="-MODEL_NAME2-", font=DEFAULT_FONT),
+            ],
+            [
+                sg.Text("Name: ", font=DEFAULT_FONT),
+                sg.Text(key="-FACE_NAME2-", font=DEFAULT_FONT),
+            ],
+            [
+                sg.Text("Certainty: ", font=DEFAULT_FONT),
+                sg.Text(key="-CERTAINTY2-", font=DEFAULT_FONT),
+            ],            
             [sg.Button("Cancel", key="-CANCEL-", font=DEFAULT_FONT)],
         ],
         key="-RIGHT_COLUMN-",
@@ -256,7 +280,7 @@ def build_window():
     return window
 
 
-def set_ui_state(window, state, face_name=None, certainty=None):
+def set_ui_state(window, state, face_names=None, certainties=None):
     """Set the UI into a specified state.
 
     state: one of ['WAITING', 'CAPTURING', 'NAMING']
@@ -289,9 +313,12 @@ def set_ui_state(window, state, face_name=None, certainty=None):
         # Turn on the right column
         window["-STATUS-"].update("Displaying Result")
         window["-RIGHT_COLUMN-"].update(visible=True)
-        window["-MODEL_NAME-"].update(MODEL_FILENAME_BASE)
-        window["-FACE_NAME-"].update(face_name)
-        window["-CERTAINTY-"].update("%2f" % (certainty * 100.0))
+        window["-MODEL_NAME1-"].update(names[0])
+        window["-FACE_NAME1-"].update(face_names[0])
+        window["-CERTAINTY1-"].update("%2f" % (certainties[0] * 100.0))
+        window["-MODEL_NAME2-"].update(names[1])
+        window["-FACE_NAME2-"].update(face_names[1])
+        window["-CERTAINTY2-"].update("%2f" % (certainties[1] * 100.0))        
         window["-CAPTURE-"].update(visible=False)
     else:
         raise RuntimeError("Invalid state %s" % state)
@@ -339,12 +366,15 @@ def main_loop(labels):
             # FOR DEBUGGING
             # Try some test images
             if event == "-TEST_IMAGE1-":
-                name, certainty = test_and_predict(TEST_IMAGE1, labels)
+                predicted_names, certainties = test_and_predict(TEST_IMAGE1,
+                                                                labels)
             elif event == "-TEST_IMAGE2-":
-                name, certainty = test_and_predict(TEST_IMAGE2, labels)
+                predicted_names, certainties = test_and_predict(TEST_IMAGE2,
+                                                                labels)
             else:
-                name, certainty = capture_and_predict(labels)
-            set_ui_state(window, "NAMING", face_name=name, certainty=certainty)
+                predicted_names, certainties = capture_and_predict(labels)
+            set_ui_state(window, "NAMING", face_names=predicted_names,
+                         certainties=certainties)
 
 
 ###########################################################
@@ -402,28 +432,37 @@ def do_predict(img, labels):
     print(tensor)
 
     # Run the image through the model to see which output it predicts
-    prediction = predict(model, interpreter, tensor)
+    predicted_names = []
+    certainties = []
+    for i in range(len(names)):
+        name = names[i]
+        model = models[i]
+        interpreter = interpreters[i]
+        prediction = predict(model, interpreter, tensor)
 
-    # import pdb; pdb.set_trace()
-    pretty_print_predictions(prediction, labels)
+        # import pdb; pdb.set_trace()
+        pretty_print_predictions(prediction, labels)
 
-    # Display the entry with the highest probability
-    highest_prediction_index = prediction.argmax()
-    certainty = float(prediction[highest_prediction_index])
-    print(
-        "Prediction %d %s  Certainty: %0.2f"
-        % (
-            highest_prediction_index,
-            labels[highest_prediction_index],
-            certainty,
+        # Display the entry with the highest probability
+        highest_prediction_index = prediction.argmax()
+        certainty = float(prediction[highest_prediction_index])
+        print(
+            "Prediction %d %s  Certainty: %0.2f"
+            % (
+                highest_prediction_index,
+                labels[highest_prediction_index],
+                certainty,
+            )
         )
-    )
+        predicted_name = labels[highest_prediction_index]
+        
+        # Say the name out loud
+        first_name = predicted_name.split(sep="_")[0]
+        text_to_speech("Hello, %s" % (first_name))
+        predicted_names.append(predicted_name)
+        certainties.append(certainty)
 
-    # Say the name out loud
-    first_name = labels[highest_prediction_index].split(sep="_")[0]
-    text_to_speech("Hello, %s" % (first_name))
-
-    return labels[highest_prediction_index], certainty
+    return predicted_names, certainties
 
 
 def test_and_predict(image_filename, labels):
