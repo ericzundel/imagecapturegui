@@ -56,7 +56,7 @@ FACE_RECOGNITION_IMAGE_HEIGHT = 100
 
 # Local path to find the model files
 MODEL_PATHNAME_BASE = "./2024model/"
-MODEL_FILENAME_BASE = "Ryland_student_recognition_2024_32bit"
+MODEL_FILENAME_BASE = "Rhyland_student_recognition_2024_32bit"
 LABEL_FILENAME = "student_recognition_labels.json"
 
 TEST_IMAGE1 = os.path.join(MODEL_PATHNAME_BASE, "donald_test.png")
