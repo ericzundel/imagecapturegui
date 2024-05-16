@@ -540,6 +540,9 @@ def do_predict(img, labels):
         model_predicted_names.append(predicted_name)
         certainties.append(certainty)
 
+    # Force the UI to update
+    window.read(timeout=1)
+    
     say_names(model_predicted_names)
     return model_predicted_names, certainties
 
