@@ -75,7 +75,7 @@ LIST_WIDTH = 20  # Characters wide for listbox element
 DISPLAY_IMAGE_WIDTH = 120  # Size of image when displayed on screen
 DISPLAY_IMAGE_HEIGHT = 120
 
-DISPLAY_TIMEOUT_SECS = 5
+DISPLAY_TIMEOUT_SECS = 12
 
 
 ####################################################################
