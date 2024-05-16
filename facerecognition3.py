@@ -69,6 +69,7 @@ TEST_IMAGE1 = os.path.join(MODEL_PATHNAME_BASE, "donald_test.png")
 TEST_IMAGE2 = os.path.join(MODEL_PATHNAME_BASE, "laila_test.png")
 
 DEFAULT_FONT = ("Any", 16)
+SMALLER_FONT = ("Any", 12)
 LIST_HEIGHT = 12  # Number of rows in listbox element
 LIST_WIDTH = 20  # Characters wide for listbox element
 
@@ -240,28 +241,28 @@ def build_window():
     right_column = sg.Column(
         [
             [
-                sg.Text("Model: ", font=DEFAULT_FONT),
-                sg.Text(key="-MODEL_NAME1-", font=DEFAULT_FONT),
+                sg.Text("Model: ", font=SMALLER_FONT),
+                sg.Text(key="-MODEL_NAME1-", font=SMALLER_FONT),
             ],
             [
-                sg.Text("Name: ", font=DEFAULT_FONT),
-                sg.Text(key="-FACE_NAME1-", font=DEFAULT_FONT),
+                sg.Text("  Name: ", font=SMALLER_FONT),
+                sg.Text(key="-FACE_NAME1-", font=SMALLER_FONT),
             ],
             [
-                sg.Text("Certainty: ", font=DEFAULT_FONT),
-                sg.Text(key="-CERTAINTY1-", font=DEFAULT_FONT),
+                sg.Text("  Certainty: ", font=SMALLER_FONT),
+                sg.Text(key="-CERTAINTY1-", font=SMALLER_FONT),
             ],
             [
-                sg.Text("Model: ", font=DEFAULT_FONT),
-                sg.Text(key="-MODEL_NAME2-", font=DEFAULT_FONT),
+                sg.Text("Model: ", font=SMALLER_FONT),
+                sg.Text(key="-MODEL_NAME2-", font=SMALLER_FONT),
             ],
             [
-                sg.Text("Name: ", font=DEFAULT_FONT),
-                sg.Text(key="-FACE_NAME2-", font=DEFAULT_FONT),
+                sg.Text("  Name: ", font=SMALLER_FONT),
+                sg.Text(key="-FACE_NAME2-", font=SMALLER_FONT),
             ],
             [
-                sg.Text("Certainty: ", font=DEFAULT_FONT),
-                sg.Text(key="-CERTAINTY2-", font=DEFAULT_FONT),
+                sg.Text("  Certainty: ", font=SMALLER_FONT),
+                sg.Text(key="-CERTAINTY2-", font=SMALLER_FONT),
             ],            
             [sg.Button("Cancel", key="-CANCEL-", font=DEFAULT_FONT)],
         ],
@@ -456,12 +457,18 @@ def do_predict(img, labels):
         )
         predicted_name = labels[highest_prediction_index]
         
-        # Say the name out loud
-        first_name = predicted_name.split(sep="_")[0]
-        text_to_speech("Hello, %s" % (first_name))
         predicted_names.append(predicted_name)
         certainties.append(certainty)
 
+    # Say the name out loud
+    if (predicted_names[0] == predicted_names[1]):
+        first_name = predicted_names[0].split(sep="_")[0]
+        text_to_speech("Hello, %s" % (first_name))
+    else:
+        first_name1 = predicted_names[0].split(sep="_")[0]
+        first_name2 = predicted_names[1].split(sep="_")[0]
+        text_to_speech("Are you %s or %s?" % (first_name1, first_name2))
+        
     return predicted_names, certainties
 
 
