@@ -253,7 +253,7 @@ def build_window():
                 sg.Text(key="-MODEL_NAME1-", font=SMALLER_FONT),
             ],
             [
-                sg.Text(),  # horizonatal spacer                
+                sg.Text(),  # horizontal spacer                
                 sg.Text(key="-FACE_NAME1-", font=SMALLER_FONT),
                 sg.Text(key="-CERTAINTY1-", font=SMALLER_FONT),
             ],
@@ -262,6 +262,7 @@ def build_window():
                 sg.Text(key="-MODEL_NAME2-", font=SMALLER_FONT),
             ],
             [
+                sg.Text(),  # horizontal spacer                
                 sg.Text(key="-FACE_NAME2-", font=SMALLER_FONT),
                 sg.Text(key="-CERTAINTY2-", font=SMALLER_FONT),
             ],
@@ -270,7 +271,7 @@ def build_window():
                 sg.Text(key="-MODEL_NAME3-", font=SMALLER_FONT),
             ],
             [
-                sg.Text(),  # horizonatal spacer                
+                sg.Text(),  # horizontal spacer                
                 sg.Text(key="-FACE_NAME3-", font=SMALLER_FONT),
                 sg.Text(key="-CERTAINTY3-", font=SMALLER_FONT),
             ],
