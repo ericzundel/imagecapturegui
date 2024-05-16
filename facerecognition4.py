@@ -528,7 +528,7 @@ def do_predict(img, labels):
         highest_prediction_index = prediction.argmax()
         certainty = float(prediction[highest_prediction_index])
         print(
-            "Prediction %d %s  Certainty: %0.2f"
+            "Prediction %d %s  Certainty: %2.2f"
             % (
                 highest_prediction_index,
                 labels[highest_prediction_index],
