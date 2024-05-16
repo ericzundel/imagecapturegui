@@ -82,3 +82,8 @@ Go through the Goole Workspace and create an API key. See [Google Workspace](htt
 Getting face recognition to work is a battle of python versioning.  I used Python 3.11 on my Windows machine and tensorflow-cpu version 2.15.0 to match the version of Tensorflow on Google Colab. Since there is little control over versioning, you'll likely run into issues if you try to run a model on another machine created with Google Colab.
 
 I used the .tf format and it seemed to be compatible at the time, but not if you install Tensorflow 2.16.0!
+
+- facerecognition.py - Used my model with a 100 x 100 x 3 input created by Mr. Ayers (see saved Google Colab model)
+- facerecognition2.py - A test to use a model trained with 10000 x 1 input created by students 
+- facerecognition3.py - A head to head test between 2 student models  (10000 x 1 input)
+- facerecognition4.py - A 4 way comparison of models created by students (10000 x 1 input)
