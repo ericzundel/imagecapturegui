@@ -250,53 +250,41 @@ def build_window():
     right_column = sg.Column(
         [
             [
-                sg.Text("Model: ", font=SMALLER_FONT),
                 sg.Text(key="-MODEL_NAME1-", font=SMALLER_FONT),
             ],
             [
-                sg.Text("  Name: ", font=SMALLER_FONT),
+                sg.Text(),  # horizonatal spacer                
                 sg.Text(key="-FACE_NAME1-", font=SMALLER_FONT),
-            ],
-            [
-                sg.Text("  Certainty: ", font=SMALLER_FONT),
                 sg.Text(key="-CERTAINTY1-", font=SMALLER_FONT),
             ],
+            [sg.Text()],  # vertical spacer            
             [
-                sg.Text("Model: ", font=SMALLER_FONT),
                 sg.Text(key="-MODEL_NAME2-", font=SMALLER_FONT),
             ],
             [
-                sg.Text("  Name: ", font=SMALLER_FONT),
                 sg.Text(key="-FACE_NAME2-", font=SMALLER_FONT),
-            ],
-            [
-                sg.Text("  Certainty: ", font=SMALLER_FONT),
                 sg.Text(key="-CERTAINTY2-", font=SMALLER_FONT),
-            ],            
+            ],
+            [sg.Text()],  # vertical spacer            
             [
-                sg.Text("Model: ", font=SMALLER_FONT),
                 sg.Text(key="-MODEL_NAME3-", font=SMALLER_FONT),
             ],
             [
-                sg.Text("  Name: ", font=SMALLER_FONT),
+                sg.Text(),  # horizonatal spacer                
                 sg.Text(key="-FACE_NAME3-", font=SMALLER_FONT),
-            ],
-            [
-                sg.Text("  Certainty: ", font=SMALLER_FONT),
                 sg.Text(key="-CERTAINTY3-", font=SMALLER_FONT),
             ],
+            [sg.Text()],  # vertical spacer            
             [
-                sg.Text("Model: ", font=SMALLER_FONT),
                 sg.Text(key="-MODEL_NAME4-", font=SMALLER_FONT),
             ],
             [
-                sg.Text("  Name: ", font=SMALLER_FONT),
+                sg.Text(),  # horizonatal spacer
                 sg.Text(key="-FACE_NAME4-", font=SMALLER_FONT),
-            ],
-            [
-                sg.Text("  Certainty: ", font=SMALLER_FONT),
                 sg.Text(key="-CERTAINTY4-", font=SMALLER_FONT),
-            ],            
+            ],
+            
+            [sg.Text()],  # vertical spacer           
             [sg.Button("Cancel", key="-CANCEL-", font=DEFAULT_FONT)],
         ],
         key="-RIGHT_COLUMN-",
@@ -367,19 +355,19 @@ def set_ui_state(window, state, face_names=None, certainties=None, image=None):
         
         window["-MODEL_NAME1-"].update(names[0])
         window["-FACE_NAME1-"].update(face_names[0])
-        window["-CERTAINTY1-"].update("%2f" % (certainties[0] * 100.0))
+        window["-CERTAINTY1-"].update("%.0f%%" % (certainties[0] * 100.0))
         
         window["-MODEL_NAME2-"].update(names[1])
         window["-FACE_NAME2-"].update(face_names[1])
-        window["-CERTAINTY2-"].update("%2f" % (certainties[1] * 100.0))
+        window["-CERTAINTY2-"].update("%.0f%%" % (certainties[1] * 100.0))
         
         window["-MODEL_NAME3-"].update(names[2])
         window["-FACE_NAME3-"].update(face_names[2])
-        window["-CERTAINTY3-"].update("%2f" % (certainties[2] * 100.0))
+        window["-CERTAINTY3-"].update("%.0f%%" % (certainties[2] * 100.0))
         
         window["-MODEL_NAME4-"].update(names[3])
         window["-FACE_NAME4-"].update(face_names[3])
-        window["-CERTAINTY4-"].update("%2f" % (certainties[3] * 100.0))
+        window["-CERTAINTY4-"].update("%.0f%%" % (certainties[3] * 100.0))
         
         window["-CAPTURE-"].update(visible=False)
     else:
@@ -424,6 +412,7 @@ def main_loop(labels):
             or event == "-TEST_IMAGE2-"
         ):
             set_ui_state(window, "CAPTURING")
+            window.read(timeout=1) # Force the window to update
             last_captured_image_time = time.monotonic()
             captured_image = None
             # For debugging, Try some test images
@@ -434,8 +423,6 @@ def main_loop(labels):
             else:
                 captured_image = capture_image()
             predicted_names, certainties = do_predict(captured_image, labels)
-            set_ui_state(window, "NAMING", face_names=predicted_names,
-                         certainties=certainties, image=captured_image)
 
 
 ###########################################################
@@ -528,7 +515,7 @@ def do_predict(img, labels):
         highest_prediction_index = prediction.argmax()
         certainty = float(prediction[highest_prediction_index])
         print(
-            "Prediction %d %s  Certainty: %2.2f"
+            "Prediction %d %s  Certainty: %.2f"
             % (
                 highest_prediction_index,
                 labels[highest_prediction_index],
@@ -539,27 +526,15 @@ def do_predict(img, labels):
         
         model_predicted_names.append(predicted_name)
         certainties.append(certainty)
-
+        
+    set_ui_state(window, "NAMING", face_names=model_predicted_names,
+                 certainties=certainties, image=img)
+    
     # Force the UI to update
     window.read(timeout=1)
     
     say_names(model_predicted_names)
     return model_predicted_names, certainties
-
-
-def test_and_predict(image_filename, labels):
-    return do_predict(img, labels)
-
-
-def capture_and_predict(labels):
-    """Grab an image and run it through the ML model
-
-    Returns: predicted_name, certainty  where certainty is a value between 0 and 1.0
-    """
-    # Grab an image from the camera and transform it to a tensor to feed into the model
-
-    return do_predict(img, labels)
-
 
 #####
 #
