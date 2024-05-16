@@ -80,7 +80,6 @@ DISPLAY_IMAGE_HEIGHT = 120
 
 DISPLAY_TIMEOUT_SECS = 12
 
-
 ####################################################################
 # Setup the Ultrasonic Sensor as a proximity sensor
 # (Requires extra hardware - only works on Raspberry Pi)
@@ -227,6 +226,9 @@ def my_img_to_arr(image):
 
 #############################################################################
 #  GUI code
+
+
+
 def build_window():
     """Builds the user interface and pops it up on the screen.
 
@@ -237,7 +239,7 @@ def build_window():
             [sg.Text("", size=(18, 1), key="-STATUS-", font=DEFAULT_FONT)],
             [sg.pin(sg.Button("Manual Capture", key="-CAPTURE-", font=DEFAULT_FONT))],
             [sg.Text()],  # vertical spacer
-            [sg.Text()],  # vertical spacer
+            [sg.pin(sg.Image(size=(5, 5), key="-IMAGE-", expand_x=True, expand_y=True))],            
             [sg.Text()],  # vertical spacer
             [sg.Button("Test Donald", key="-TEST_IMAGE1-", font=("Any", 10))],
             [sg.Button("Test Laila", key="-TEST_IMAGE2-", font=("Any", 10))],
@@ -311,8 +313,22 @@ def build_window():
     window.maximize()
     return window
 
+def display_image_in_ui(image, ui_key):
+    """Given an OpenCV image, display it in the UI in the element by ui_key.
 
-def set_ui_state(window, state, face_names=None, certainties=None):
+    image: OpenCV Image buffer
+
+    ui_key: the key for an sg.Image element in the UI layout.
+
+    Returns: None
+    """
+    # Resize the image to fit
+    resized = cv.resize(image, (DISPLAY_IMAGE_WIDTH, DISPLAY_IMAGE_HEIGHT))
+    img_bytes = cv.imencode(".png", resized)[1].tobytes()
+    window[ui_key].update(data=img_bytes, visible=True)
+
+
+def set_ui_state(window, state, face_names=None, certainties=None, image=None):
     """Set the UI into a specified state.
 
     state: one of ['WAITING', 'CAPTURING', 'NAMING']
@@ -335,15 +351,18 @@ def set_ui_state(window, state, face_names=None, certainties=None):
         # Show manual capture button
         window["-STATUS-"].update("Waiting to Capture")
         window["-CAPTURE-"].update(visible=True)
+        window["-IMAGE-"].update(size=(0,0), data=None, visible=False)        
         window["-RIGHT_COLUMN-"].update(visible=False)
         window["-LEFT_COLUMN-"].expand(True, True)
     elif state == "CAPTURING":
         # Hide Manual capture button
         window["-STATUS-"].update("Running ML prediction")
+        window["-IMAGE-"].update(size=(0,0), data=None, visible=False)        
         window["-CAPTURE-"].update(visible=False)
     elif state == "NAMING":
         # Turn on the right column
         window["-STATUS-"].update("Displaying Result")
+        display_image_in_ui(image, "-IMAGE-")
         window["-RIGHT_COLUMN-"].update(visible=True)
         
         window["-MODEL_NAME1-"].update(names[0])
@@ -406,18 +425,17 @@ def main_loop(labels):
         ):
             set_ui_state(window, "CAPTURING")
             last_captured_image_time = time.monotonic()
-            # FOR DEBUGGING
-            # Try some test images
+            captured_image = None
+            # For debugging, Try some test images
             if event == "-TEST_IMAGE1-":
-                predicted_names, certainties = test_and_predict(TEST_IMAGE1,
-                                                                labels)
+                captured_image = cv.imread(TEST_IMAGE1, cv.IMREAD_COLOR)
             elif event == "-TEST_IMAGE2-":
-                predicted_names, certainties = test_and_predict(TEST_IMAGE2,
-                                                                labels)
+                captured_image = cv.imread(TEST_IMAGE2, cv.IMREAD_COLOR)
             else:
-                predicted_names, certainties = capture_and_predict(labels)
+                captured_image = capture_image()
+            predicted_names, certainties = do_predict(captured_image, labels)
             set_ui_state(window, "NAMING", face_names=predicted_names,
-                         certainties=certainties)
+                         certainties=certainties, image=captured_image)
 
 
 ###########################################################
@@ -487,6 +505,7 @@ def say_names(predicted_names):
         text_to_speech("Are you %s, %s, or %s?" % (first_name1, first_name2, first_name3))
     else:
         text_to_speech("I am very confused")
+        
 def do_predict(img, labels):
     tensor = tensor_from_image(img)
 
@@ -526,7 +545,6 @@ def do_predict(img, labels):
 
 
 def test_and_predict(image_filename, labels):
-    img = cv.imread(image_filename, cv.IMREAD_COLOR)
     return do_predict(img, labels)
 
 
@@ -536,7 +554,7 @@ def capture_and_predict(labels):
     Returns: predicted_name, certainty  where certainty is a value between 0 and 1.0
     """
     # Grab an image from the camera and transform it to a tensor to feed into the model
-    img = capture_image()
+
     return do_predict(img, labels)
 
 
