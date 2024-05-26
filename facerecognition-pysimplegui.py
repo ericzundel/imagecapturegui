@@ -1,5 +1,12 @@
-#!/usr/bin/python
+#!/usr/bin/python 
 """GUI that loads the face recognition model and does prediction when button is pressed
+
+*** FOR REFERENCE ONLY                                                     
+*** This version was written with PySimpleGUI                              
+*** Unfortunately, they changed their license after I finished. The new    
+*** license requires a fee. I believe that using in an academic environment
+*** appears to requires the non-hobbist license, so I'm re-writing in      
+*** straight tkinter     
 
 See model creation code at
 https://colab.research.google.com/drive/1AdO1kHuEQfOWgx-fv5d9CbPYj2RmnpMU#scrollTo=2122e422
@@ -18,7 +25,7 @@ import numpy as np
 import cv2 as cv
 
 # import matplotlib.pyplot as plt
-import tkinter as tk
+import PySimpleGUI as sg
 from gtts import gTTS
 
 # This weird import code is so we can support both the full
@@ -209,14 +216,143 @@ def my_img_to_arr(image):
     elif tensorflow_type == "LITE":
         return np.asarray(image, dtype=np.float32)
 
-###########################################################
-# GUI Code
 
+#############################################################################
+#  GUI code
 def build_window():
-    pass
+    """Builds the user interface and pops it up on the screen.
+
+    Returns: sg.Window object
+    """
+    left_column = sg.Column(
+        [
+            [sg.Text("", size=(18, 1), key="-STATUS-", font=DEFAULT_FONT)],
+            [sg.pin(sg.Button("Manual Capture", key="-CAPTURE-", font=DEFAULT_FONT))],
+            [sg.Text()],  # vertical spacer
+            [sg.Text()],  # vertical spacer
+            [sg.Text()],  # vertical spacer
+            [sg.Button("Test Donald", key="-TEST_IMAGE1-", font=("Any", 10))],
+            [sg.Button("Test Laila", key="-TEST_IMAGE2-", font=("Any", 10))],
+            [sg.Button("Exit", font=("Any", 6))],
+        ],
+        key="-LEFT_COLUMN-",
+    )
+    right_column = sg.Column(
+        [
+            [
+                sg.Text("Name: ", font=DEFAULT_FONT),
+                sg.Text(key="-FACE_NAME-", font=DEFAULT_FONT),
+            ],
+            [
+                sg.Text("Certainty: ", font=DEFAULT_FONT),
+                sg.Text(key="-CERTAINTY-", font=DEFAULT_FONT),
+            ],
+            [sg.Button("Cancel", key="-CANCEL-", font=DEFAULT_FONT)],
+        ],
+        key="-RIGHT_COLUMN-",
+        visible=False,
+    )
+    # Push and VPush elements help UI to center when the window is maximized
+    layout = [
+        [sg.VPush()],
+        [sg.Push(), sg.Column([[left_column, sg.pin(right_column)]]), sg.Push()],
+        [sg.VPush()],
+    ]
+    window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
+    # Doing this makes the app take up the whole screen
+    window.maximize()
+    return window
+
 
 def set_ui_state(window, state, face_name=None, certainty=None):
-    pass
+    """Set the UI into a specified state.
+
+    state: one of ['WAITING', 'CAPTURING', 'NAMING']
+
+    In state 'WAITING', most of the UI is hidden, but there is a
+    button for manually capturing an image presented.
+
+    In state 'CAPTURING', the manual button is hidden and the
+    status label is updated
+
+    In state 'NAMING', the captured images are displayed and
+    a listbox with choices for choosing the names associated
+    with the images is displayed.
+
+    Returns: None
+    """
+
+    if state == "WAITING":
+        # Hide images and right column
+        # Show manual capture button
+        window["-STATUS-"].update("Waiting to Capture")
+        window["-CAPTURE-"].update(visible=True)
+        window["-RIGHT_COLUMN-"].update(visible=False)
+        window["-LEFT_COLUMN-"].expand(True, True)
+    elif state == "CAPTURING":
+        # Hide Manual capture button
+        window["-STATUS-"].update("Running ML prediction")
+        window["-CAPTURE-"].update(visible=False)
+    elif state == "NAMING":
+        # Turn on the right column
+        window["-STATUS-"].update("Displaying Result")
+        window["-RIGHT_COLUMN-"].update(visible=True)
+        window["-FACE_NAME-"].update(face_name)
+        window["-CERTAINTY-"].update("%2f" % (certainty * 100.0))
+        window["-CAPTURE-"].update(visible=False)
+    else:
+        raise RuntimeError("Invalid state %s" % state)
+
+
+def main_loop(labels):
+    """UI Event Loop
+
+    This loop executes until someone closes the main window.
+    """
+
+    last_captured_image_time = 0
+
+    while True:
+        # Check for a trigger 4x a second
+        event, values = window.read(timeout=50)
+
+        # check for a timeout, send the GUI back to WAITING mode
+        if (
+            last_captured_image_time > 0
+            and time.monotonic() - last_captured_image_time > DISPLAY_TIMEOUT_SECS
+        ):
+            set_ui_state(window, "WAITING")
+            last_captured_image_time = 0
+
+        # Every time something happens in the UI, it returns an event.
+        # By decoding this event you can figure out what happened and take
+        # an action.
+        if event in (sg.WIN_CLOSED, "Exit"):  # always check for closed window
+            break
+        # If the user doesn't want to classify this image, the cancel button
+        # will clear out the state.
+        if event == "-CANCEL-":
+            set_ui_state(window, "WAITING")
+        # Check to see if we are to capture new images by checking the
+        # proximity sensor hardware or if the button was pressed
+        if (
+            check_button()
+            or event == "-CAPTURE-"
+            or event == "-TEST_IMAGE1-"
+            or event == "-TEST_IMAGE2-"
+        ):
+            set_ui_state(window, "CAPTURING")
+            last_captured_image_time = time.monotonic()
+            # FOR DEBUGGING
+            # Try some test images
+            if event == "-TEST_IMAGE1-":
+                name, certainty = test_and_predict(TEST_IMAGE1, labels)
+            elif event == "-TEST_IMAGE2-":
+                name, certainty = test_and_predict(TEST_IMAGE2, labels)
+            else:
+                name, certainty = capture_and_predict(labels)
+            set_ui_state(window, "NAMING", face_name=name, certainty=certainty)
+
 
 ###########################################################
 # Other functions

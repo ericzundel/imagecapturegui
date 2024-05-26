@@ -1,4 +1,6 @@
 venv/
+\#*
+\.\#*
 *~
 drive-oauth.json
 credentials.json
