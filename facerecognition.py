@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#! env python
 """GUI that loads the face recognition model and does prediction when button is pressed
 
 See model creation code at
@@ -21,6 +21,8 @@ import cv2 as cv
 import tkinter as tk
 from gtts import gTTS
 
+from ui.main_controller import MainController
+
 # This weird import code is so we can support both the full
 # Tensorflow library (linux, windows) and Tensorflow Lite
 # (linux).
@@ -33,7 +35,7 @@ tensorflow_type = None
 model = None
 interpreter = None
 vision = None
-
+"""
 try:
     import tensorflow as tf
 
@@ -48,7 +50,7 @@ except ModuleNotFoundError:
     except ModuleNotFoundError:
         print("Cannot load either tensorflow or tflite_runtime modules")
         exit(1)
-
+"""
 ###################################################################
 # Constants
 
@@ -125,10 +127,12 @@ def load_model():
 
     if tensorflow_type == "FULL":
         print("Initializing Tensorflow Version" + tf.__version__)
-
-        model = tf.keras.models.load_model(
-            os.path.join(MODEL_PATHNAME_BASE, "%s.tf" % (MODEL_FILENAME_BASE))
-        )
+        model_path = os.path.join(MODEL_PATHNAME_BASE, "%s.tf" % (MODEL_FILENAME_BASE))
+        try:
+            model = tf.keras.models.load_model(model_path)     
+        except IOError as ex:
+            print("Couldn't find %s. Try unzipping it?" % (model_path))
+            exit(1)
         # Sanity check the model after loading
         model.summary()
     elif tensorflow_type == "LITE":
@@ -211,12 +215,8 @@ def my_img_to_arr(image):
 
 ###########################################################
 # GUI Code
+# See the 'ui' package
 
-def build_window():
-    pass
-
-def set_ui_state(window, state, face_name=None, certainty=None):
-    pass
 
 ###########################################################
 # Other functions
@@ -325,16 +325,18 @@ camera = cv.VideoCapture(0)
 camera.set(cv.CAP_PROP_BUFFERSIZE, 1)
 
 # Create and display the main UI
-window = build_window()
-set_ui_state(window, "WAITING")
+controller = MainController(labels=labels)
+controller.set_state("WAITING")
 
 
 #####################################################################
 # Initialize the Machine Learning model. This takes some time (about 20 seconds)
-load_model()
+print("*** TODO: load the model")
+#load_model()
 
 try:
-    main_loop(labels)
+    controller.mainloop()
+    
 except BaseException as e:
     print("Exiting due to %s " % str(e))
     print(traceback.format_exc())
