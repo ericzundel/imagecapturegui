@@ -33,9 +33,11 @@ MODEL_PATHNAME = "./2024model/"
 
 student_labels = []
 
+
 def load_labels():
     global student_labels
-    labels_filename = os.path.join(MODEL_PATHNAME, "student_recognition_labels.json")
+    labels_filename = os.path.join(
+        MODEL_PATHNAME, "student_recognition_labels.json")
     labels_file = open(labels_filename)
 
     json_data = json.load(labels_file)

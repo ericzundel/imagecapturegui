@@ -38,6 +38,7 @@ GPIO.setup(ECHO_PIN, GPIO.IN)
 SENSOR_LOCK = Lock()
 SENSOR_TRIGGERED = False  # Protected by sensor_lock
 
+
 def read_distance():
     distances = []
     num_over_threshold = 0
@@ -86,6 +87,7 @@ def read_one_sample():
     # divided by 2 gives meters. Multiply by 100 for cm
     # 1/1000000 s/us * 340 m/s * 100 cm/m * 2 = 0.017
     return pulselen * 0.017
+
 
 def read_sensor_thread():
     global SENSOR_TRIGGERED

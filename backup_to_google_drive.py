@@ -14,6 +14,7 @@ from googleapiclient.http import MediaFileUpload
 # Set the scope to the required API access
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]
 
+
 def authenticate():
     creds = None
 
@@ -27,7 +28,8 @@ def authenticate():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file(
+                "credentials.json", SCOPES)
             creds = flow.run_local_server(port=0)
 
         # Save the credentials for the next run
@@ -53,7 +55,8 @@ def create_folder(service, folder_name, parent_folder_id=None):
 
 def upload_file(service, local_file_path, folder_id):
     media = MediaFileUpload(local_file_path, resumable=True)
-    file_metadata = {"name": os.path.basename(local_file_path), "parents": [folder_id]}
+    file_metadata = {"name": os.path.basename(
+        local_file_path), "parents": [folder_id]}
 
     file = (
         service.files()
@@ -103,4 +106,5 @@ if __name__ == "__main__":
     )
 
     print("Backing up %s to %s" % (local_folder_path, drive_folder_name))
-    backup_to_google_drive(parent_folder_id, local_folder_path, drive_folder_name)
+    backup_to_google_drive(
+        parent_folder_id, local_folder_path, drive_folder_name)

@@ -29,7 +29,8 @@ class TwoColumnGUI(GridLayout):
 
     def on_button_press(self, instance):
         message = self.text_input.text
-        popup = Popup(title='Hello Dialog', content=Label(text=f'Hello {message}!'), size_hint=(None, None), size=(400, 200))
+        popup = Popup(title='Hello Dialog', content=Label(
+            text=f'Hello {message}!'), size_hint=(None, None), size=(400, 200))
         popup.open()
 
 

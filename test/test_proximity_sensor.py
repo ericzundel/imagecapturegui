@@ -7,6 +7,7 @@ sensor = proximity_sensor.ProximitySensor(debug=True)
 
 print("Main thread waiting")
 
+
 def main_loop():
     while True:
         time.sleep(1)
@@ -16,6 +17,7 @@ def main_loop():
                 "Distance is %f. Triggered Distance is %f"
                 % (sensor.distance(), sensor.triggered_distance())
             )
+
 
 try:
     main_loop()

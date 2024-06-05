@@ -1,6 +1,7 @@
 
 import tkinter as tk
 
+
 class TwoColumnGUI:
     def __init__(self, master):
         self.master = master
@@ -20,10 +21,12 @@ class TwoColumnGUI:
         self.button2 = tk.Button(self.master, text="Button 2")
         self.button2.grid(row=1, column=1, padx=10, pady=10, sticky=tk.W)
 
+
 def main():
     root = tk.Tk()
     gui = TwoColumnGUI(root)
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()

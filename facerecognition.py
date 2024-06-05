@@ -127,9 +127,10 @@ def load_model():
 
     if tensorflow_type == "FULL":
         print("Initializing Tensorflow Version" + tf.__version__)
-        model_path = os.path.join(MODEL_PATHNAME_BASE, "%s.tf" % (MODEL_FILENAME_BASE))
+        model_path = os.path.join(
+            MODEL_PATHNAME_BASE, "%s.tf" % (MODEL_FILENAME_BASE))
         try:
-            model = tf.keras.models.load_model(model_path)     
+            model = tf.keras.models.load_model(model_path)
         except IOError as ex:
             print("Couldn't find %s. Try unzipping it?" % (model_path))
             exit(1)
@@ -152,7 +153,8 @@ def tensor_from_image(img):
     img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
     # Tensorflow lite requires RGB colorspace
     # img = cv# .cvtColor(img, cv.COLOR_BGR2RGB)
-    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT))
+    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH,
+                    FACE_RECOGNITION_IMAGE_HEIGHT))
     arr = my_img_to_arr(img) / 255.0
 
     # print("Shape of array is: ")
@@ -332,11 +334,11 @@ controller.set_state("WAITING")
 #####################################################################
 # Initialize the Machine Learning model. This takes some time (about 20 seconds)
 print("*** TODO: load the model")
-#load_model()
+# load_model()
 
 try:
     controller.mainloop()
-    
+
 except BaseException as e:
     print("Exiting due to %s " % str(e))
     print(traceback.format_exc())

@@ -20,6 +20,7 @@ DISPLAY_IMAGE_HEIGHT = 150
 #
 camera = cv.VideoCapture(0)
 
+
 def format_choice(choice_elem):
     """Format one element of the JSON array for display.
 
@@ -50,20 +51,20 @@ def read_face_choices():
 def build_window(list_values):
     """Builds the user interface and pops it up on the screen"""
     left_column = sg.Column([
-            [sg.Text(size=(18, 1), text="WAITING", key="-STATUS-")],
-            [sg.Button("Manual Capture", key="-CAPTURE-")],
-            [sg.Image(size=(5, 5), key="-IMAGE0-", expand_x=True, expand_y=True)],
-            [sg.Image(size=(5, 5), key="-IMAGE1-", expand_x=True, expand_y=True)],
-            [sg.Image(size=(5, 5), key="-IMAGE2-", expand_x=True, expand_y=True)],
-        ], key="-LEFT_COLUMN-", expand_x=True, expand_y=True)
+        [sg.Text(size=(18, 1), text="WAITING", key="-STATUS-")],
+        [sg.Button("Manual Capture", key="-CAPTURE-")],
+        [sg.Image(size=(5, 5), key="-IMAGE0-", expand_x=True, expand_y=True)],
+        [sg.Image(size=(5, 5), key="-IMAGE1-", expand_x=True, expand_y=True)],
+        [sg.Image(size=(5, 5), key="-IMAGE2-", expand_x=True, expand_y=True)],
+    ], key="-LEFT_COLUMN-", expand_x=True, expand_y=True)
     right_column = sg.Column([
-            [sg.Listbox(list_values, size=(20, 30), enable_events=True,
-                        key="-LIST-")],
-            [sg.Button("Cancel",  key="-CANCEL-")],
-        ], key='-RIGHT_COLUMN-', visible=False, expand_x=True, expand_y=True)
+        [sg.Listbox(list_values, size=(20, 30), enable_events=True,
+                    key="-LIST-")],
+        [sg.Button("Cancel",  key="-CANCEL-")],
+    ], key='-RIGHT_COLUMN-', visible=False, expand_x=True, expand_y=True)
     layout = [
         [left_column, right_column],
-        ]
+    ]
     window = sg.Window("Face Image Capture", layout, finalize=True)
     return window
 
@@ -82,7 +83,8 @@ def set_ui_state(window, state):
         window["-STATUS-"].update("Waiting to Capture")
         window["-CAPTURE-"].update(visible=True)
         for i in range(3):
-            window["-IMAGE%d-" % i].update(size=(0, 0), data=None, visible=False)
+            window["-IMAGE%d-" %
+                   i].update(size=(0, 0), data=None, visible=False)
         window["-RIGHT_COLUMN-"].update(visible=False)
 
     elif (state == 'CAPTURING'):
@@ -90,7 +92,8 @@ def set_ui_state(window, state):
         window["-STATUS-"].update("Choose a Label")
         window["-CAPTURE-"].update(visible=False)
         for i in range(3):
-            window["-IMAGE%d-" % i].update(size=(0, 0), data=None, visible=False)
+            window["-IMAGE%d-" %
+                   i].update(size=(0, 0), data=None, visible=False)
 
     elif (state == 'NAMING'):
         # Turn on the right column
@@ -102,10 +105,12 @@ def set_ui_state(window, state):
     else:
         raise RuntimeError("Invalid state %s" % state)
 
+
 def get_selected_value(value_list):
     """Retrieve the selected value as a scalar, not a one item list"""
     if value_list is None:
-        raise Exception("Whoops, something went wrong in retrieving value from event")
+        raise Exception(
+            "Whoops, something went wrong in retrieving value from event")
     return value_list[0]
 
 
@@ -114,7 +119,8 @@ def save_images(images, choice):
     directory = os.path.join(
         "images", "%s%s" % (choice["first_name"], choice["last_name"])
     )
-    print("Capturing images for %s in dir %s" % (format_choice(choice), directory))
+    print("Capturing images for %s in dir %s" %
+          (format_choice(choice), directory))
     #
     # Call OpenCV to capture from the camera
     #
@@ -134,6 +140,7 @@ def save_images(images, choice):
         count = count + 1
         print("Wrote %s" % (filename))
         count = count + 1
+
 
 def capture_images():
     """Captures NUM_IMAGES_TO_CAPTURE from the camera
@@ -166,11 +173,13 @@ def capture_images():
     cv.destroyAllWindows()
     return images
 
+
 def display_image_in_ui(image, ui_key):
     # Resize the image to fit
     resized = cv.resize(image, (DISPLAY_IMAGE_WIDTH, DISPLAY_IMAGE_HEIGHT))
     img_bytes = cv.imencode('.png', resized)[1].tobytes()
     window[ui_key].update(data=img_bytes)
+
 
 def do_capture_images():
     window["-STATUS-"].update("Capturing")
@@ -182,6 +191,7 @@ def do_capture_images():
 # ###################################################################
 # Setup the User Interface
 #
+
 
 # Read the JSON file in
 face_choices = read_face_choices()
@@ -229,7 +239,8 @@ while True:
         ]
 
         if choice_list is None:
-            sg.popup("Whoops, something went wrong when retrieving element from list")
+            sg.popup(
+                "Whoops, something went wrong when retrieving element from list")
         elif last_captured_images is []:
             sg.popup("Whoops, no images captured")
         else:
@@ -245,4 +256,3 @@ window.close()
 
 # When everything done, release the capture
 camera.release()
-
