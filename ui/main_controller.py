@@ -18,8 +18,29 @@ class MainController:
         self.main_view.mainloop()
 
     def set_state(self, state):
-        """Set the state of the UI to the specified condition"""
-        pass
+        """State is one of "WAITING", "CAPTURING", or "NAMING"""
+        if (state is "WAITING"):
+            self.main_view.show_back_button(False)
+            self.main_view.set_status_label("Waiting for Capture")
+        elif (state is "CAPTURING"):
+            self.main_view.show_back_button(True)
+            self.main_view.set_status_label("Capturing image...")
+        elif (state is "NAMING"):
+            self.main_view.show_back_button(True)
+            self.main_view.set_status_label("Name the Image")
+        else:
+            raise Exception("Invalid State passed: %s" % state)
 
-   # def set_ui_state(window, state, face_name=None, certainty=None):
-   #     pass
+    def set_state_capturing_cb(self):
+        print("Capturing")
+        self.set_state("CAPTURING")
+
+    def set_state_waiting_cb(self):
+        print("Waiting")
+        self.set_state("WAITING")
+
+    def set_state_naming_cb(self):
+        self.set_state("NAMING")
+
+    def close_window(self):
+        self.main_view.close_window()

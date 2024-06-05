@@ -1,0 +1,32 @@
+numpy
+opencv-python
+
+# For google drive backup
+google-api-python-client 
+google-auth-httplib2 
+google-auth-oauthlib
+
+# For speech synthesis
+gTTS
+
+# For debugging image conversions in facerecognition code
+# mathplotlib
+# Had to rebuild mathplotlib for python 3.11
+#  python -m pip install   --upgrade   --pre   --index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple   --extra-index-url https://pypi.org/simple   matplotlib
+
+# In the end, I don't think I used conda...
+# conda install -c conda-forge cudatoolkit=11.2 cudnn=8.1.0
+
+####
+# Tensorflow library for face recognition with trained model
+
+# You'll need to use tensorflow-cpu on Windows
+#tensorflow-cpu==2.15.0  # to insure compatibility with Windows, use tensorflow-cpu
+# You'll need to use tflite-runtime on a Raspberry Pi 4 with the stock image
+#tflite-runtime
+tensorflow
+
+# These dependencies might be needed if you change to use a different
+# save format for Tensorflow models
+pyyaml
+#h5py

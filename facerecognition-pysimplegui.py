@@ -1,4 +1,4 @@
-#!/usr/bin/python 
+#!/usr/bin/python
 """GUI that loads the face recognition model and does prediction when button is pressed
 
 *** FOR REFERENCE ONLY                                                     
@@ -155,7 +155,8 @@ def tensor_from_image(img):
     img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
     # Tensorflow lite requires RGB colorspace
     # img = cv# .cvtColor(img, cv.COLOR_BGR2RGB)
-    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT))
+    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH,
+                    FACE_RECOGNITION_IMAGE_HEIGHT))
     arr = my_img_to_arr(img) / 255.0
 
     # print("Shape of array is: ")
@@ -258,7 +259,8 @@ def build_window():
         [sg.Push(), sg.Column([[left_column, sg.pin(right_column)]]), sg.Push()],
         [sg.VPush()],
     ]
-    window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
+    window = sg.Window("Face Image Capture", layout,
+                       finalize=True, resizable=True)
     # Doing this makes the app take up the whole screen
     window.maximize()
     return window

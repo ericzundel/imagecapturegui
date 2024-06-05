@@ -39,6 +39,7 @@ MAX_OVER_THRESHOLD = int(NUM_SAMPLES - (NUM_SAMPLES * CERTAINTY_THRESHOLD))
 
 class ProximitySensor:
     """Class that uses a HC-SR04 sensor on a Raspberry Pi to detect"""
+
     def __init__(self, echo_pin=DEFAULT_ECHO_PIN,
                  trigger_pin=DEFAULT_TRIGGER_PIN,
                  distance_threshold=DEFAULT_DISTANCE_THRESHOLD,
@@ -53,7 +54,7 @@ class ProximitySensor:
         self._echo_pin = echo_pin
         self._distance_threshold = distance_threshold
         self._debug = debug
-        
+
         # Setup Trigger pin
         GPIO.setup(self._trigger_pin, GPIO.OUT, initial=GPIO.LOW)
         # Setup Echo pin
@@ -69,10 +70,13 @@ class ProximitySensor:
         if self._debug:
             print("ProximitySensor: Trigger pin is %d" % (self._trigger_pin))
             print("ProximitySensor: Echo pin is %d" % (self._echo_pin))
-            print("ProximitySensor: Distance Threshold is %d" % (self._distance_threshold))
-            print("ProximitySensor: Max over threshold is %d" % (MAX_OVER_THRESHOLD))
-            print("ProximitySensor: Max Distance %d" % (MAX_DISTANCE), flush=True)
-            
+            print("ProximitySensor: Distance Threshold is %d" %
+                  (self._distance_threshold))
+            print("ProximitySensor: Max over threshold is %d" %
+                  (MAX_OVER_THRESHOLD))
+            print("ProximitySensor: Max Distance %d" %
+                  (MAX_DISTANCE), flush=True)
+
         # Start a background thread
         self._thread = Thread(target=self._read_sensor_thread, args=[])
         self._thread.start()
@@ -130,10 +134,10 @@ class ProximitySensor:
 
         if (self._debug):
             print("ProximitySensor: Thread started", flush=True)
-            
+
         while True:
             start_time = time.time()
-            
+
             # Check to see if the thread should exit
             with self._sensor_lock:
                 if self._stop_now:
@@ -193,7 +197,7 @@ class ProximitySensor:
         with self._sensor_lock:
             self._stop_now = True
         self._thread.join()
-        
+
     class TimeoutError(RuntimeError):
         def __init__(self, message):
             super().__init__(self, message)

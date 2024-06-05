@@ -60,8 +60,8 @@ MODEL_PATHNAME_BASE = "./2024model/"
 
 model_dict = {
     'Rhyland': "Rhyland_student_recognition_2024_32bit",
-    'Laila' : "Laila_student_recognition_2024_32bit",
-    }
+    'Laila': "Laila_student_recognition_2024_32bit",
+}
 
 LABEL_FILENAME = "student_recognition_labels.json"
 
@@ -132,18 +132,18 @@ def load_model():
     names = list(model_dict.keys())
     if tensorflow_type == "FULL":
         print("Initializing Tensorflow Version" + tf.__version__)
-        for name in names:    
+        for name in names:
             model = tf.keras.models.load_model(
                 os.path.join(MODEL_PATHNAME_BASE, "%s.tf" % (model_dict[name]))
             )
             models.append(model)
             interpreters.append(None)
             # Sanity check the model after loading
-            #model.summary()            
+            # model.summary()
 
     elif tensorflow_type == "LITE":
         print("Initializing Tensorflow Lite")
-        for name in names:                              
+        for name in names:
             # Load the TFLite model
             interpreter = tflite_runtime.Interpreter(
                 model_path=os.path.join(
@@ -154,9 +154,11 @@ def load_model():
             interpreters.append(interpreter)
             models.append(None)
 
+
 def tensor_from_image(img):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT))
+    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH,
+                    FACE_RECOGNITION_IMAGE_HEIGHT))
     arr = my_img_to_arr(img) / 255.0
 
     print("Shape of array is: ")
@@ -263,7 +265,7 @@ def build_window():
             [
                 sg.Text("  Certainty: ", font=SMALLER_FONT),
                 sg.Text(key="-CERTAINTY2-", font=SMALLER_FONT),
-            ],            
+            ],
             [sg.Button("Cancel", key="-CANCEL-", font=DEFAULT_FONT)],
         ],
         key="-RIGHT_COLUMN-",
@@ -275,7 +277,8 @@ def build_window():
         [sg.Push(), sg.Column([[left_column, sg.pin(right_column)]]), sg.Push()],
         [sg.VPush()],
     ]
-    window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
+    window = sg.Window("Face Image Capture", layout,
+                       finalize=True, resizable=True)
     # Doing this makes the app take up the whole screen
     window.maximize()
     return window
@@ -319,7 +322,7 @@ def set_ui_state(window, state, face_names=None, certainties=None):
         window["-CERTAINTY1-"].update("%2f" % (certainties[0] * 100.0))
         window["-MODEL_NAME2-"].update(names[1])
         window["-FACE_NAME2-"].update(face_names[1])
-        window["-CERTAINTY2-"].update("%2f" % (certainties[1] * 100.0))        
+        window["-CERTAINTY2-"].update("%2f" % (certainties[1] * 100.0))
         window["-CAPTURE-"].update(visible=False)
     else:
         raise RuntimeError("Invalid state %s" % state)
@@ -456,7 +459,7 @@ def do_predict(img, labels):
             )
         )
         predicted_name = labels[highest_prediction_index]
-        
+
         predicted_names.append(predicted_name)
         certainties.append(certainty)
 
@@ -468,7 +471,7 @@ def do_predict(img, labels):
         first_name1 = predicted_names[0].split(sep="_")[0]
         first_name2 = predicted_names[1].split(sep="_")[0]
         text_to_speech("Are you %s or %s?" % (first_name1, first_name2))
-        
+
     return predicted_names, certainties
 
 

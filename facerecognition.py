@@ -344,7 +344,8 @@ except BaseException as e:
     print(traceback.format_exc())
 
 # When everything done, release resources.
-window.close()
+controller.close_window()
+
 camera.release()
 if proximity_sensor is not None:
     proximity_sensor.deinit()

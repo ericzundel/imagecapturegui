@@ -10,15 +10,48 @@ class MainView:
         self.controller = controller
 
         self.root = tk.Tk()
+        self._min_height = 400
+        self._min_width = 400
+        self.root.geometry("400x400")
+        self.root.minsize = (self._min_width, self._min_height)
+
+        self.build_ui()
+
+    def build_ui(self):
         self.root.title("ML/Engineering Concepts")
 
-        # Left column with buttons
-        self.back_button = tk.Button(self.root, text="Back")
-        self.back_button.pack(side=tk.LEFT, padx=2, pady=2)
+        # top has a pane with a back button and a status message
 
-        self.pane = tk.Frame(
+        self.status_pane = tk.Frame(
             self.root, highlightbackground="blue", highlightthickness=2)
-        self.pane.pack(fill=tk.BOTH)
+        self.status_pane.pack(side=tk.TOP, fill=tk.BOTH)
+        self.back_button = tk.Button(self.status_pane, text="Back")
+        self.show_back_button(True)
+
+        self.status_label = tk.Label(self.status_pane,
+                                     text="Waiting for Capture")
+        self.status_label.pack(fill=tk.Y)
+
+        # Below that is an area where the sub-views live
+
+        self.subview_pane = tk.Frame(
+            self.root, highlightbackground="red", highlightthickness=2)
+        self.subview_pane.pack(side=tk.TOP, fill=tk.BOTH)
+
+        self.debug_set_state_capture_button = tk.Button(self.subview_pane,
+                                                        text="Toggle State to Capturing",
+                                                        command=self.controller.set_state_capturing_cb)
+        self.debug_set_state_capture_button.pack()
+
+        self.debug_set_state_waiting_button = tk.Button(self.subview_pane,
+                                                        text="Toggle State to Waiting",
+                                                        command=self.controller.set_state_waiting_cb)
+
+        self.debug_set_state_waiting_button.pack()
+        self.debug_set_state_naming_button = tk.Button(self.subview_pane,
+                                                       text="Toggle State to Naming",
+                                                       command=self.controller.set_state_naming_cb)
+        self.debug_set_state_naming_button.pack()
 
         # Right column with list and button
         # self.right_frame = tk.Frame(root)
@@ -27,14 +60,17 @@ class MainView:
         # self.listbox = tk.Listbox(self.right_frame)
         # self.listbox.pack(side=tk.TOP, pady=5)
 
-    def update_name_selection():
-        # This returns a tuple containing the indices (= the position)
-        # of the items selected by the user.
-        indices = listbox.curselection()
-        listbox_item = None
-        if len(indices > 0):
-            self.listbox_item = listbox.get(i)
-            controller.set_selected_name(listbox_item)
+    def show_back_button(self, visible):
+        if (visible):
+            self.back_button.pack(side=tk.LEFT, padx=2, pady=2)
+        else:
+            self.back_button.pack_forget()
+
+    def set_status_label(self, value):
+        self.status_label.config(text=value)
 
     def mainloop(self):
         self.root.mainloop()
+
+    def close_window(self):
+        self.root.close()

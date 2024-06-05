@@ -21,6 +21,7 @@ proximity_sensor = ProximitySensor(echo_pin=17, trigger_pin=4, debug=True)
 #
 camera = cv.VideoCapture(0)
 
+
 def format_choice(choice_elem):
     """Format one element of the JSON array for display.
 
@@ -29,6 +30,7 @@ def format_choice(choice_elem):
     first name/last name combination.
     """
     return "%s %s" % (choice_elem["first_name"], choice_elem["last_name"])
+
 
 def read_face_choices():
     """Read the JSON file and process it, checking for errors"""
@@ -52,7 +54,8 @@ def build_window(list_values):
     layout = [
         [sg.Text("Select a name to capture images")],
         [sg.Input(size=(20, 1), enable_events=True, key="-INPUT-")],
-        [sg.Listbox(list_values, size=(20, 30), enable_events=True, key="-LIST-")],
+        [sg.Listbox(list_values, size=(20, 30),
+                    enable_events=True, key="-LIST-")],
         [sg.Button("Exit")],
     ]
 
@@ -62,9 +65,11 @@ def build_window(list_values):
 def get_selected_value(value_list):
     """Retrieve the selected value as a scalar, not a one item list"""
     if value_list is None:
-        raise Exception("Whoops, something went wrong in retrieving value from event")
+        raise Exception(
+            "Whoops, something went wrong in retrieving value from event")
 
     return value_list[0]
+
 
 def capture_images():
     """Captures and saves Images to disk, returns an array of pathnames
@@ -169,8 +174,8 @@ while True:
             # Now we can get the original object back from the json file
             choice = choice_list[0]
             ####
-            #sg.popup("Get ready to smile %s!" % (format_choice(choice)))
-            #capture_and_save_images(choice)
+            # sg.popup("Get ready to smile %s!" % (format_choice(choice)))
+            # capture_and_save_images(choice)
             # After the line above completes, the loop will continue.
 
 

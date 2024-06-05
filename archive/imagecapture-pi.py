@@ -31,6 +31,7 @@ def format_choice(choice_elem):
     """
     return "%s %s" % (choice_elem['first_name'], choice_elem['last_name'])
 
+
 def read_face_choices():
     """Read the JSON file and process it, checking for errors"""
     with open(face_choices_file_path, 'r') as file:
@@ -40,32 +41,39 @@ def read_face_choices():
             print(">>>Looks like something went wrong loading %s. Is it valid JSON?",
                   (face_choices_file_path))
             raise ex
-    
+
         # Now, loaded_dict contains the dictionary from the file
-        #print(face_choices)
+        # print(face_choices)
         return face_choices
+
 
 def build_window(list_values):
     """Builds the user interface and pops it up on the screen"""
     layout = [[sg.Text('Select a name to capture images')],
-          [sg.Input(size=(20, 1), enable_events=True, key='-INPUT-')],
-          [sg.Listbox(list_values, size=(20, 30), enable_events=True, key='-LIST-')],
-          [sg.Button('Exit')]]
+              [sg.Input(size=(20, 1), enable_events=True, key='-INPUT-')],
+              [sg.Listbox(list_values, size=(20, 30),
+                          enable_events=True, key='-LIST-')],
+              [sg.Button('Exit')]]
 
     return sg.Window('Face Image Capture', layout)
+
 
 def get_selected_value(value_list):
     """Retrieve the selected value as a scalar, not a one item list"""
     if (value_list is None):
-        raise Exception("Whoops, something went wrong in retrieving value from event")
-    
+        raise Exception(
+            "Whoops, something went wrong in retrieving value from event")
+
     return value_list[0]
 
+
 def capture_and_save_images(choice):
-    directory = os.path.join("images", "%s%s" % (choice['first_name'], choice['last_name']))
-    print("Capturing images for %s in dir %s" % (format_choice(choice), directory))
+    directory = os.path.join("images", "%s%s" % (
+        choice['first_name'], choice['last_name']))
+    print("Capturing images for %s in dir %s" %
+          (format_choice(choice), directory))
     ###
-    ### Call OpenCV to capture from the camera
+    # Call OpenCV to capture from the camera
     ###
     if not os.path.exists(directory):
         os.mkdir(directory)
@@ -73,39 +81,41 @@ def capture_and_save_images(choice):
     count = 0
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     while count < NUM_IMAGES_TO_CAPTURE:
-        #read returns two values one is the exit code and other is the frame
+        # read returns two values one is the exit code and other is the frame
         status, frame = camera.read()
-        #check if we get the frame or not
+        # check if we get the frame or not
         if not status:
             print("Frame is not been captured. Exiting...")
             raise Exception("Frame not captured")
-        
-        #convert the image into gray format for fast caculation
+
+        # convert the image into gray format for fast caculation
         gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        #display window with gray image
-        cv.imshow("Video Window",gray)
-        #resizing the image to store it
-        gray = cv.resize(gray, (200,200))
-        #Store the image to specific label folder
+        # display window with gray image
+        cv.imshow("Video Window", gray)
+        # resizing the image to store it
+        gray = cv.resize(gray, (200, 200))
+        # Store the image to specific label folder
         filename = '%s/img%s-%d.png' % (directory, timestamp, count)
         cv.imwrite(filename, gray)
-        count=count+1
+        count = count+1
         print("Wrote %s" % (filename))
         if (count < NUM_IMAGES_TO_CAPTURE):
             print("Wait to take another image...")
-            sg.popup("Captured %d of %d images. Click OK to take another image." % (count, NUM_IMAGES_TO_CAPTURE))
+            sg.popup("Captured %d of %d images. Click OK to take another image." % (
+                count, NUM_IMAGES_TO_CAPTURE))
         cv.destroyAllWindows()
+
 
 def capture_images():
     """Captures and saves Images to disk, returns an array of pathnames
 
     Returns: Array of paths to images
     """
-    images=[]
+    images = []
     directory = os.path.join("images", 'UNNAMED')
     print("Capturing images in dir %s" % (directory))
     ###
-    ### Call OpenCV to capture from the camera
+    # Call OpenCV to capture from the camera
     ###
     if not os.path.exists(directory):
         os.mkdir(directory)
@@ -113,23 +123,23 @@ def capture_images():
     count = 0
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     while count < NUM_IMAGES_TO_CAPTURE:
-        #read returns two values one is the exit code and other is the frame
+        # read returns two values one is the exit code and other is the frame
         status, frame = camera.read()
-        #check if we get the frame or not
+        # check if we get the frame or not
         if not status:
             print("Frame is not been captured. Exiting...")
             raise Exception("Frame not captured")
-        
-        #convert the image into gray format for fast caculation
+
+        # convert the image into gray format for fast caculation
         gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        #display window with gray image
-        cv.imshow("Video Window",gray)
-        #resizing the image to store it
-        gray = cv.resize(gray, (200,200))
-        #Store the image to specific label folder
+        # display window with gray image
+        cv.imshow("Video Window", gray)
+        # resizing the image to store it
+        gray = cv.resize(gray, (200, 200))
+        # Store the image to specific label folder
         filename = '%s/img%s-%d.png' % (directory, timestamp, count)
         cv.imwrite(filename, gray)
-        count=count+1
+        count = count+1
         print("Wrote %s" % (filename))
         images.append(filename)
         if (count < NUM_IMAGES_TO_CAPTURE):
@@ -138,16 +148,18 @@ def capture_images():
         cv.destroyAllWindows()
     return images
 
+
 def check_distance_sensor():
     distance = ultrasonic_sensor.distance
     print("Distance is %f" % (distance))
-    if (distance < DISTANCE_THRESHOLD):        
+    if (distance < DISTANCE_THRESHOLD):
         return True
     return False
-    
-############################-########################################
+
+############################ -########################################
 # Setup the User Interface
 #
+
 
 # Read the JSON file in
 face_choices = read_face_choices()
@@ -171,14 +183,14 @@ while True:
     # Check for a trigger about every 50 milliseconds
     event, values = window.read(timeout=10)
     elapsed_ms = (time.monotonic_ns() - start_ns) / 1000000
-    #if (elapsed_ms > 5):
+    # if (elapsed_ms > 5):
     if True:
         print("Elapsed ms=%d" % (elapsed_ms))
         presence = check_distance_sensor()
         if presence:
             image_files = capture_images()
-            sg.popup('Tripped! %f\nSaved to %s' % (ultrasonic_sensor.distance, "\n".join(image_files)))
-            
+            sg.popup('Tripped! %f\nSaved to %s' %
+                     (ultrasonic_sensor.distance, "\n".join(image_files)))
 
     # Every time something happens in the UI, it returns an event.
     # By decoding this event you can figure out what happened and take
@@ -187,7 +199,7 @@ while True:
         break
 
     # Someone entered date in the search field
-    if values['-INPUT-'] != '': 
+    if values['-INPUT-'] != '':
         search = values['-INPUT-']
         new_values = [x for x in names if search in x]  # do the filtering
         window['-LIST-'].update(new_values)     # display in the listbox
@@ -196,13 +208,14 @@ while True:
     else:
         # display original unfiltered list
         window['-LIST-'].update(names)
-        
+
     # if a list item is clicked on, the following code gest triggered
     if event == '-LIST-' and len(values['-LIST-']):
         selected_value = get_selected_value(values['-LIST-'])
-        choice_list = [choice for choice in face_choices if format_choice(choice) == selected_value]
-        #print("choice_list is:")
-        #print(choice_list)
+        choice_list = [choice for choice in face_choices if format_choice(
+            choice) == selected_value]
+        # print("choice_list is:")
+        # print(choice_list)
         if (choice_list is None):
             print("Whoops, something went wrong when retrieving element from list")
         else:
@@ -213,9 +226,8 @@ while True:
             capture_and_save_images(choice)
             # After the line above completes, the loop will continue.
 
-            
+
 window.close()
 
 # When everything done, release the capture
 camera.release()
-

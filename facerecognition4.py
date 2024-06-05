@@ -60,10 +60,10 @@ MODEL_PATHNAME_BASE = "./2024model/"
 
 model_dict = {
     "Rhyland's Model": "Rhyland_student_recognition_2024_32bit",
-    "Laila's Model" : "Laila_student_recognition_2024_32bit",
-    "Justin Brown's Model" : "Justin_Brown_student_recognition_2024_32bit",
-    "Kenadie's Model" : "Kenadie_student_recognition_2024_32bit"
-    }
+    "Laila's Model": "Laila_student_recognition_2024_32bit",
+    "Justin Brown's Model": "Justin_Brown_student_recognition_2024_32bit",
+    "Kenadie's Model": "Kenadie_student_recognition_2024_32bit"
+}
 
 LABEL_FILENAME = "student_recognition_labels.json"
 
@@ -133,18 +133,18 @@ def load_model():
     names = list(model_dict.keys())
     if tensorflow_type == "FULL":
         print("Initializing Tensorflow Version" + tf.__version__)
-        for name in names:    
+        for name in names:
             model = tf.keras.models.load_model(
                 os.path.join(MODEL_PATHNAME_BASE, "%s.tf" % (model_dict[name]))
             )
             models.append(model)
             interpreters.append(None)
             # Sanity check the model after loading
-            #model.summary()            
+            # model.summary()
 
     elif tensorflow_type == "LITE":
         print("Initializing Tensorflow Lite")
-        for name in names:                              
+        for name in names:
             # Load the TFLite model
             interpreter = tflite_runtime.Interpreter(
                 model_path=os.path.join(
@@ -155,9 +155,11 @@ def load_model():
             interpreters.append(interpreter)
             models.append(None)
 
+
 def tensor_from_image(img):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT))
+    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH,
+                    FACE_RECOGNITION_IMAGE_HEIGHT))
     arr = my_img_to_arr(img) / 255.0
 
     print("Shape of array is: ")
@@ -228,7 +230,6 @@ def my_img_to_arr(image):
 #  GUI code
 
 
-
 def build_window():
     """Builds the user interface and pops it up on the screen.
 
@@ -239,7 +240,8 @@ def build_window():
             [sg.Text("", size=(18, 1), key="-STATUS-", font=DEFAULT_FONT)],
             [sg.pin(sg.Button("Manual Capture", key="-CAPTURE-", font=DEFAULT_FONT))],
             [sg.Text()],  # vertical spacer
-            [sg.pin(sg.Image(size=(5, 5), key="-IMAGE-", expand_x=True, expand_y=True))],            
+            [sg.pin(sg.Image(size=(5, 5), key="-IMAGE-",
+                    expand_x=True, expand_y=True))],
             [sg.Text()],  # vertical spacer
             [sg.Button("Test Donald", key="-TEST_IMAGE1-", font=("Any", 10))],
             [sg.Button("Test Laila", key="-TEST_IMAGE2-", font=("Any", 10))],
@@ -253,29 +255,29 @@ def build_window():
                 sg.Text(key="-MODEL_NAME1-", font=SMALLER_FONT),
             ],
             [
-                sg.Text(),  # horizontal spacer                
+                sg.Text(),  # horizontal spacer
                 sg.Text(key="-FACE_NAME1-", font=SMALLER_FONT),
                 sg.Text(key="-CERTAINTY1-", font=SMALLER_FONT),
             ],
-            [sg.Text()],  # vertical spacer            
+            [sg.Text()],  # vertical spacer
             [
                 sg.Text(key="-MODEL_NAME2-", font=SMALLER_FONT),
             ],
             [
-                sg.Text(),  # horizontal spacer                
+                sg.Text(),  # horizontal spacer
                 sg.Text(key="-FACE_NAME2-", font=SMALLER_FONT),
                 sg.Text(key="-CERTAINTY2-", font=SMALLER_FONT),
             ],
-            [sg.Text()],  # vertical spacer            
+            [sg.Text()],  # vertical spacer
             [
                 sg.Text(key="-MODEL_NAME3-", font=SMALLER_FONT),
             ],
             [
-                sg.Text(),  # horizontal spacer                
+                sg.Text(),  # horizontal spacer
                 sg.Text(key="-FACE_NAME3-", font=SMALLER_FONT),
                 sg.Text(key="-CERTAINTY3-", font=SMALLER_FONT),
             ],
-            [sg.Text()],  # vertical spacer            
+            [sg.Text()],  # vertical spacer
             [
                 sg.Text(key="-MODEL_NAME4-", font=SMALLER_FONT),
             ],
@@ -284,8 +286,8 @@ def build_window():
                 sg.Text(key="-FACE_NAME4-", font=SMALLER_FONT),
                 sg.Text(key="-CERTAINTY4-", font=SMALLER_FONT),
             ],
-            
-            [sg.Text()],  # vertical spacer           
+
+            [sg.Text()],  # vertical spacer
             [sg.Button("Cancel", key="-CANCEL-", font=DEFAULT_FONT)],
         ],
         key="-RIGHT_COLUMN-",
@@ -297,10 +299,12 @@ def build_window():
         [sg.Push(), sg.Column([[left_column, sg.pin(right_column)]]), sg.Push()],
         [sg.VPush()],
     ]
-    window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
+    window = sg.Window("Face Image Capture", layout,
+                       finalize=True, resizable=True)
     # Doing this makes the app take up the whole screen
     window.maximize()
     return window
+
 
 def display_image_in_ui(image, ui_key):
     """Given an OpenCV image, display it in the UI in the element by ui_key.
@@ -340,36 +344,36 @@ def set_ui_state(window, state, face_names=None, certainties=None, image=None):
         # Show manual capture button
         window["-STATUS-"].update("Waiting to Capture")
         window["-CAPTURE-"].update(visible=True)
-        window["-IMAGE-"].update(size=(0,0), data=None, visible=False)        
+        window["-IMAGE-"].update(size=(0, 0), data=None, visible=False)
         window["-RIGHT_COLUMN-"].update(visible=False)
         window["-LEFT_COLUMN-"].expand(True, True)
     elif state == "CAPTURING":
         # Hide Manual capture button
         window["-STATUS-"].update("Running ML prediction")
-        window["-IMAGE-"].update(size=(0,0), data=None, visible=False)        
+        window["-IMAGE-"].update(size=(0, 0), data=None, visible=False)
         window["-CAPTURE-"].update(visible=False)
     elif state == "NAMING":
         # Turn on the right column
         window["-STATUS-"].update("Displaying Result")
         display_image_in_ui(image, "-IMAGE-")
         window["-RIGHT_COLUMN-"].update(visible=True)
-        
+
         window["-MODEL_NAME1-"].update(names[0])
         window["-FACE_NAME1-"].update(face_names[0])
         window["-CERTAINTY1-"].update("%.0f%%" % (certainties[0] * 100.0))
-        
+
         window["-MODEL_NAME2-"].update(names[1])
         window["-FACE_NAME2-"].update(face_names[1])
         window["-CERTAINTY2-"].update("%.0f%%" % (certainties[1] * 100.0))
-        
+
         window["-MODEL_NAME3-"].update(names[2])
         window["-FACE_NAME3-"].update(face_names[2])
         window["-CERTAINTY3-"].update("%.0f%%" % (certainties[2] * 100.0))
-        
+
         window["-MODEL_NAME4-"].update(names[3])
         window["-FACE_NAME4-"].update(face_names[3])
         window["-CERTAINTY4-"].update("%.0f%%" % (certainties[3] * 100.0))
-        
+
         window["-CAPTURE-"].update(visible=False)
     else:
         raise RuntimeError("Invalid state %s" % state)
@@ -413,7 +417,7 @@ def main_loop(labels):
             or event == "-TEST_IMAGE2-"
         ):
             set_ui_state(window, "CAPTURING")
-            window.read(timeout=1) # Force the window to update
+            window.read(timeout=1)  # Force the window to update
             last_captured_image_time = time.monotonic()
             captured_image = None
             # For debugging, Try some test images
@@ -478,7 +482,7 @@ def say_names(predicted_names):
     # First, uniquify the list
     predicted_names = list(set(predicted_names))
 
-    # Customize the prompt to 
+    # Customize the prompt to
     if (len(predicted_names) == 1):
         first_name = predicted_names[0].split(sep="_")[0]
         text_to_speech("Hello, %s" % (first_name))
@@ -490,10 +494,12 @@ def say_names(predicted_names):
         first_name1 = predicted_names[0].split(sep="_")[0]
         first_name2 = predicted_names[1].split(sep="_")[0]
         first_name3 = predicted_names[2].split(sep="_")[0]
-        text_to_speech("Are you %s, %s, or %s?" % (first_name1, first_name2, first_name3))
+        text_to_speech("Are you %s, %s, or %s?" %
+                       (first_name1, first_name2, first_name3))
     else:
         text_to_speech("I am very confused")
-        
+
+
 def do_predict(img, labels):
     tensor = tensor_from_image(img)
 
@@ -524,18 +530,19 @@ def do_predict(img, labels):
             )
         )
         predicted_name = labels[highest_prediction_index]
-        
+
         model_predicted_names.append(predicted_name)
         certainties.append(certainty)
-        
+
     set_ui_state(window, "NAMING", face_names=model_predicted_names,
                  certainties=certainties, image=img)
-    
+
     # Force the UI to update
     window.read(timeout=1)
-    
+
     say_names(model_predicted_names)
     return model_predicted_names, certainties
+
 
 #####
 #

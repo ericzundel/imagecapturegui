@@ -143,7 +143,8 @@ def load_model():
 
 def tensor_from_image(img):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT))
+    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH,
+                    FACE_RECOGNITION_IMAGE_HEIGHT))
     arr = my_img_to_arr(img) / 255.0
 
     print("Shape of array is: ")
@@ -250,7 +251,8 @@ def build_window():
         [sg.Push(), sg.Column([[left_column, sg.pin(right_column)]]), sg.Push()],
         [sg.VPush()],
     ]
-    window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
+    window = sg.Window("Face Image Capture", layout,
+                       finalize=True, resizable=True)
     # Doing this makes the app take up the whole screen
     window.maximize()
     return window

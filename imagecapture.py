@@ -127,7 +127,8 @@ def pin_image(val):
     """
     # https://stackoverflow.com/questions/72970201
     return sg.pin(
-        sg.Image(size=(5, 5), key="-IMAGE%d-" % val, expand_x=True, expand_y=True)
+        sg.Image(size=(5, 5), key="-IMAGE%d-" %
+                 val, expand_x=True, expand_y=True)
     )
 
 
@@ -174,7 +175,8 @@ def build_window(list_values):
         [sg.Push(), sg.Column([[left_column, sg.pin(right_column)]]), sg.Push()],
         [sg.VPush()],
     ]
-    window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
+    window = sg.Window("Face Image Capture", layout,
+                       finalize=True, resizable=True)
     # Doing this makes the app take up the whole screen
     window.maximize()
     return window
@@ -190,7 +192,8 @@ def save_images(images, choice):
     """
     first_last = "%s_%s" % (choice["first_name"], choice["last_name"])
     directory = os.path.join("images", first_last)
-    print("Capturing images for %s in dir %s" % (format_choice(choice), directory))
+    print("Capturing images for %s in dir %s" %
+          (format_choice(choice), directory))
     #
     # Call OpenCV to capture from the camera
     #
@@ -264,7 +267,8 @@ def set_ui_state(window, state, images=None):
         window["-STATUS-"].update("Waiting to Capture")
         window["-CAPTURE-"].update(visible=True)
         for i in range(NUM_IMAGES_TO_SHOW):
-            window["-IMAGE%d-" % i].update(size=(0, 0), data=None, visible=False)
+            window["-IMAGE%d-" %
+                   i].update(size=(0, 0), data=None, visible=False)
         window["-RIGHT_COLUMN-"].update(visible=False)
         window["-LEFT_COLUMN-"].expand(True, True)
 
@@ -273,7 +277,8 @@ def set_ui_state(window, state, images=None):
         window["-STATUS-"].update("Choose a Label")
         window["-CAPTURE-"].update(visible=False)
         for i in range(NUM_IMAGES_TO_SHOW):
-            window["-IMAGE%d-" % i].update(size=(0, 0), data=None, visible=False)
+            window["-IMAGE%d-" %
+                   i].update(size=(0, 0), data=None, visible=False)
 
     elif state == "NAMING":
         # Turn on the right column
@@ -296,7 +301,8 @@ def get_selected_value(value_list):
     Returns: string with the displayed value selected in the sg.List()
     """
     if value_list is None:
-        raise Exception("Whoops, something went wrong in retrieving value from event")
+        raise Exception(
+            "Whoops, something went wrong in retrieving value from event")
     return value_list[0]
 
 
