@@ -1,5 +1,7 @@
 """GUI w/ data collection and model predicton using two hardware buttons
 
+Merges facerecognition*.py and imagecapture.py
+
 Repo is https://github.com/ericzundel/imagecapturegui
 
 Hardware button 1: Capture Data
@@ -87,6 +89,7 @@ DEFAULT_FONT = ("Any", 16)
 SMALLER_FONT = ("Any", 12)
 LIST_HEIGHT = 12  # Number of rows in listbox element
 LIST_WIDTH = 20  # Characters wide for listbox element
+FACE_CHOICES_FILE_PATH = "face_choices.json"
 
 DISPLAY_IMAGE_WIDTH = 300  # Size of image when displayed on screen
 DISPLAY_IMAGE_HEIGHT = 300
@@ -138,6 +141,7 @@ if GPIO is not None:
 
 ############################################################################
 # ML code
+
 
 def load_model():
     global names
@@ -247,30 +251,60 @@ def my_img_to_arr(image):
 #  GUI code
 
 
-def build_window():
+def format_choice(choice_elem):
+    """Format one element of the JSON array for display.
+
+    Concatenate the first_name and last_name fields in the json array.
+    This means that each entry in the JSON file must have a unique
+    first name/last name combination.
+
+    Returns: string with first name and last name separated by a space.
+    """
+    return "%s %s" % (choice_elem["first_name"], choice_elem["last_name"])
+
+
+def read_face_choices():
+    """Read the JSON file and process it, checking for errors.
+
+    Returns: dictionary containing the data in the json file.
+    """
+    with open(FACE_CHOICES_FILE_PATH, "r") as file:
+        try:
+            face_choices = json.load(file)
+        except Exception as ex:
+            print(
+                ">>>Looks like something went wrong loading %s. Is it valid JSON?",
+                (FACE_CHOICES_FILE_PATH),
+            )
+            raise ex
+        # Now, loaded_dict contains the dictionary from the file
+        # print(face_choices)
+        return face_choices
+
+
+def build_window(list_values):
     """Builds the user interface and pops it up on the screen.
 
     Returns: sg.Window object
     """
     left_column = sg.Column(
         [
-            [sg.Text("", size=(18, 1), key="-STATUS-", font=DEFAULT_FONT)],
+            [sg.Text("", size=(28, 1), key="-STATUS-", font=DEFAULT_FONT)],
             [sg.Text()],  # vertical spacer
             [
                 sg.pin(
                     sg.Image(size=(5, 5), key="-IMAGE-", expand_x=True, expand_y=True),
                 ),
             ],
-            [sg.Text("", size=(18, 1), key="-EXPECTED-LABEL-", font=DEFAULT_FONT)],
+            [sg.pin(sg.Text("", size=(18, 1), key="-EXPECTED-LABEL-", font=DEFAULT_FONT))],
             #  [sg.Text()],  # vertical spacer
             [sg.pin(sg.Button("Capture", key="-CAPTURE-", font=DEFAULT_FONT))],
             [sg.Button("Predict", key="-PREDICT-", font=DEFAULT_FONT)],
-
             [sg.Button("Exit", font=("Any", 6))],
         ],
         key="-LEFT_COLUMN-",
     )
-    right_column = sg.Column(
+    predict_column = sg.Column(
         [
             [
                 sg.Text(key="-MODEL_NAME1-", font=SMALLER_FONT),
@@ -310,19 +344,60 @@ def build_window():
             [sg.Text()],  # vertical spacer
             [sg.Button("Cancel", key="-CANCEL-", font=DEFAULT_FONT)],
         ],
-        key="-RIGHT_COLUMN-",
+        key="-PREDICT_COLUMN-",
+        visible=False,
+    )
+
+    naming_column = sg.Column(
+        [
+            [
+                sg.Listbox(
+                    list_values,
+                    size=(LIST_WIDTH, LIST_HEIGHT),
+                    enable_events=True,
+                    key="-LIST-",
+                    font=("Any", 18),
+                    sbar_width=30,
+                    sbar_arrow_width=30,
+                )
+            ],
+            [sg.Button("Cancel", key="-CANCEL2-", font=DEFAULT_FONT)],
+        ],
+        key="-NAMING_COLUMN-",
         visible=False,
     )
     # Push and VPush elements help UI to center when the window is maximized
     layout = [
         [sg.VPush()],
-        [sg.Push(), sg.Column([[left_column, sg.pin(right_column)]]), sg.Push()],
+        [
+            sg.Push(),
+            sg.Column(
+                [
+                    [
+                        left_column,
+                        sg.pin(predict_column),
+                        sg.pin(naming_column),
+                    ]
+                ]
+            ),
+            sg.Push(),
+        ],
         [sg.VPush()],
     ]
     window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
     # Doing this makes the app take up the whole screen
     window.maximize()
     return window
+
+
+def get_selected_value(value_list):
+    """Retrieve the selected value as a scalar, not a one item list.
+
+    Returns: string with the displayed value selected in the sg.List()
+    """
+    if value_list is None:
+        raise Exception("Whoops, something went wrong in retrieving value from event")
+    return value_list[0]
 
 
 def display_image_in_ui(image, ui_key):
@@ -340,8 +415,9 @@ def display_image_in_ui(image, ui_key):
     window[ui_key].update(data=img_bytes, visible=True)
 
 
-def set_ui_state(window, state, face_names=None, certainties=None, image=None,
-                 expected_label=None):
+def set_ui_state(
+    window, state, face_names=None, certainties=None, image=None, expected_label=None
+):
     """Set the UI into a specified state.
 
     state: one of ['WAITING', 'CAPTURING', 'NAMING']
@@ -367,23 +443,31 @@ def set_ui_state(window, state, face_names=None, certainties=None, image=None,
         window["-PREDICT-"].update(visible=True)
         window["-IMAGE-"].update(size=(0, 0), data=None, visible=False)
         window["-EXPECTED-LABEL-"].update("", visible=False)
-        window["-RIGHT_COLUMN-"].update(visible=False)
+        window["-PREDICT_COLUMN-"].update(visible=False)
+        window["-NAMING_COLUMN-"].update(visible=False)
         window["-LEFT_COLUMN-"].expand(True, True)
+        window["-CANCEL-"].update(visible=True)
+        window["-CANCEL2-"].update(visible=False)
     elif state == "CAPTURING":
         # Hide Manual capture button
         window["-STATUS-"].update("Running ML prediction")
         window["-IMAGE-"].update(size=(0, 0), data=None, visible=False)
         window["-EXPECTED-LABEL-"].update("", visible=False)
+        window["-PREDICT_COLUMN-"].update(visible=False)
+        window["-NAMING_COLUMN-"].update(visible=False)
         window["-CAPTURE-"].update(visible=False)
         window["-PREDICT-"].update(visible=False)
-    elif state == "NAMING":
-        # Turn on the right column
-        window["-STATUS-"].update("Image")
+        window["-CANCEL-"].update(visible=True)
+        window["-CANCEL2-"].update(visible=False)
+    elif state == "PREDICTING":
+        # Turn on the prediction column
+        window["-STATUS-"].update("Test Image")
         display_image_in_ui(image, "-IMAGE-")
-        if (expected_label is not None):
+        if expected_label is not None:
             expected_label = "Expected: %s" % expected_label
         window["-EXPECTED-LABEL-"].update(expected_label, visible=True)
-        window["-RIGHT_COLUMN-"].update(visible=True)
+        window["-PREDICT_COLUMN-"].update(visible=True)
+        window["-NAMING_COLUMN-"].update(visible=False)
 
         window["-MODEL_NAME1-"].update(names[0])
         window["-FACE_NAME1-"].update(face_names[0])
@@ -403,6 +487,19 @@ def set_ui_state(window, state, face_names=None, certainties=None, image=None,
 
         window["-CAPTURE-"].update(visible=False)
         window["-PREDICT-"].update(visible=False)
+        window["-CANCEL-"].update(visible=True)
+        window["-CANCEL2-"].update(visible=False)
+    elif state == "NAMING":
+
+        window["-STATUS-"].update("Label (Classify) your image")
+        window["-CAPTURE-"].update(visible=False)
+        if image is None:
+            raise RuntimeError("No image passed. ")
+        display_image_in_ui(image, "-IMAGE-")
+        window["-PREDICT_COLUMN-"].update(visible=False)
+        window["-NAMING_COLUMN-"].update(visible=True)
+        window["-CANCEL-"].update(visible=False)
+        window["-CANCEL2-"].update(visible=True)
     else:
         raise RuntimeError("Invalid state %s" % state)
 
@@ -413,6 +510,7 @@ def main_loop(labels):
     This loop executes until someone closes the main window.
     """
 
+    last_captured_image = None
     last_captured_image_time = 0
 
     while True:
@@ -435,13 +533,16 @@ def main_loop(labels):
             break
         # If the user doesn't want to classify this image, the cancel button
         # will clear out the state.
-        if event == "-CANCEL-":
+        if event == "-CANCEL-" or event == "-CANCEL2-":
+            last_captured_image = None
+            last_captured_image_time = 0
             set_ui_state(window, "WAITING")
+
         # Check to see if we are to capture new images by checking the
         # proximity sensor hardware or if the button was pressed
         capture_pressed = check_capture_button() or event == "-CAPTURE-"
         predict_pressed = check_predict_button() or event == "-PREDICT-"
-        if (capture_pressed or predict_pressed):
+        if capture_pressed or predict_pressed:
             set_ui_state(window, "CAPTURING")
             window.read(timeout=1)  # Force the window to update
             last_captured_image_time = time.monotonic()
@@ -449,10 +550,43 @@ def main_loop(labels):
             # For demo purposes/debugging, Try some test images
             if predict_pressed:
                 (captured_image, expected_label) = get_test_image_and_label()
+                predicted_names, certainties = do_predict(
+                    captured_image, labels, expected_label
+                )
             else:
-                captured_image = capture_image()
-            predicted_names, certainties = do_predict(captured_image, labels,
-                                                      expected_label)
+                last_captured_image = capture_image()
+                set_ui_state(window, "NAMING", image=last_captured_image)
+
+        # if a list item is clicked on, the following code gest triggered
+        if event == "-LIST-" and len(values["-LIST-"]):
+            selected_value = get_selected_value(values["-LIST-"])
+            choice_list = [
+                choice
+                for choice in face_choices
+                if format_choice(choice) == selected_value
+            ]
+
+            if choice_list is None:
+                sg.popup(
+                    "Whoops, something went wrong when retrieving element from list"
+                )
+            elif last_captured_image is None:
+                sg.popup("Whoops, no images captured")
+            else:
+                # Now we can get the original object back from the json file
+                choice = choice_list[0]
+                # TODO(ericzundel): Using a dialog is problematic with the Raspberry Pi
+                # Windowing System. The dialog can get stuck underneath the main window
+                # making the UI unresponsive.
+                # Eliminating the confirmation dialog for the Hill Street Demo.
+                # if confirm_choice(choice):
+                if True:
+                    # TODO(): Save the stored images to disk
+                    # save_images(last_captured_images, choice)
+                    text_to_speech("Hello, %s" % (choice["first_name"]))
+                    last_captured_image = None
+                    last_captured_image_time = 0
+                    set_ui_state(window, "WAITING")
 
 
 ###########################################################
@@ -496,6 +630,16 @@ def load_labels():
     labels_filename = os.path.join(MODEL_PATHNAME_BASE, LABEL_FILENAME)
     with open(labels_filename) as f:
         return json.load(f)
+
+
+def confirm_choice(choice):
+    name = "%s %s" % (choice["first_name"], choice["last_name"])
+    result = sg.popup_ok_cancel(
+        "Save for %s?" % name, keep_on_top=True, font=DEFAULT_FONT
+    )
+    if result == "OK":
+        return True
+    return False
 
 
 def text_to_speech(text):
@@ -570,11 +714,11 @@ def do_predict(img, labels, expected_label):
 
     set_ui_state(
         window,
-        "NAMING",
+        "PREDICTING",
         face_names=model_predicted_names,
         certainties=certainties,
         image=img,
-        expected_label=expected_label
+        expected_label=expected_label,
     )
 
     # Force the UI to update
@@ -593,8 +737,15 @@ def get_test_image_and_label():
 
 
 #####
-#
+# Load list of labels associated with the saved ML Models to display when predicting
 labels = load_labels()
+
+# Read the JSON file in with names to select for classifying
+face_choices = read_face_choices()
+
+# Format the names in the file for display in a listbox
+names = sorted([format_choice(elem) for elem in face_choices])
+print("List of names found in JSON file is:", names)
 
 ####################################################################
 # Setup OpenCV for reading from the camera
@@ -605,7 +756,7 @@ camera = cv.VideoCapture(0)
 camera.set(cv.CAP_PROP_BUFFERSIZE, 1)
 
 # Create and display the main UI
-window = build_window()
+window = build_window(names)
 set_ui_state(window, "WAITING")
 
 
