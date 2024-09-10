@@ -78,10 +78,13 @@ LABEL_FILENAME = "student_recognition_labels.json"
 
 # Data to be returned by get_test_image()
 test_image_db = (
+    (os.path.join(MODEL_PATHNAME_BASE, "rhyland_test.png"), "Rhyland"),
+    (os.path.join(MODEL_PATHNAME_BASE, "alexandra_test.png"), "Alexandra"),
     (os.path.join(MODEL_PATHNAME_BASE, "donald_test.png"), "Donald"),
     (os.path.join(MODEL_PATHNAME_BASE, "laila_test.png"), "Laila"),
     # TODO(ericzundel): Add more images here
 )
+
 # Keep track of the last image tested so we can rotate through them.
 next_test_image = 0
 
