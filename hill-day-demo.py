@@ -88,8 +88,8 @@ SMALLER_FONT = ("Any", 12)
 LIST_HEIGHT = 12  # Number of rows in listbox element
 LIST_WIDTH = 20  # Characters wide for listbox element
 
-DISPLAY_IMAGE_WIDTH = 120  # Size of image when displayed on screen
-DISPLAY_IMAGE_HEIGHT = 120
+DISPLAY_IMAGE_WIDTH = 220  # Size of image when displayed on screen
+DISPLAY_IMAGE_HEIGHT = 220
 
 DISPLAY_TIMEOUT_SECS = 20  # Increased for Hill Demo Was 12 for classroom.
 
