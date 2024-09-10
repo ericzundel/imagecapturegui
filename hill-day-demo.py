@@ -132,9 +132,9 @@ if GPIO is not None:
     capture_button_pin = 21
     predict_button_pin = 20
 
-    # Setup IO pin for button
+    # Setup IO pin for buttons
     GPIO.setup(capture_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
+    GPIO.setup(predict_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 ############################################################################
 # ML code
