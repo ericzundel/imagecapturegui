@@ -91,7 +91,7 @@ LIST_WIDTH = 20  # Characters wide for listbox element
 DISPLAY_IMAGE_WIDTH = 120  # Size of image when displayed on screen
 DISPLAY_IMAGE_HEIGHT = 120
 
-DISPLAY_TIMEOUT_SECS = 12
+DISPLAY_TIMEOUT_SECS = 20  # Increased for Hill Demo Was 12 for classroom.
 
 ####################################################################
 # Setup the Ultrasonic Sensor as a proximity sensor
@@ -255,16 +255,17 @@ def build_window():
     left_column = sg.Column(
         [
             [sg.Text("", size=(18, 1), key="-STATUS-", font=DEFAULT_FONT)],
-            [sg.pin(sg.Button("Manual Capture", key="-CAPTURE-", font=DEFAULT_FONT))],
             [sg.Text()],  # vertical spacer
             [
                 sg.pin(
                     sg.Image(size=(5, 5), key="-IMAGE-", expand_x=True, expand_y=True),
                 ),
-                sg.Text("", size=(18, 1), key="-EXPECTED-LABEL-", font=DEFAULT_FONT)
             ],
-            [sg.Text()],  # vertical spacer
-            [sg.Button("Test Predict", key="-PREDICT-", font=("Any", 10))],
+            [sg.Text("", size=(18, 1), key="-EXPECTED-LABEL-", font=DEFAULT_FONT)],
+            #  [sg.Text()],  # vertical spacer
+            [sg.pin(sg.Button("Capture", key="-CAPTURE-", font=DEFAULT_FONT))],
+            [sg.Button("Predict", key="-PREDICT-", font=DEFAULT_FONT)],
+
             [sg.Button("Exit", font=("Any", 6))],
         ],
         key="-LEFT_COLUMN-",
@@ -377,8 +378,10 @@ def set_ui_state(window, state, face_names=None, certainties=None, image=None,
         window["-PREDICT-"].update(visible=False)
     elif state == "NAMING":
         # Turn on the right column
-        window["-STATUS-"].update("Displaying Result")
+        window["-STATUS-"].update("Image")
         display_image_in_ui(image, "-IMAGE-")
+        if (expected_label is not None):
+            expected_label = "Expected: %s" % expected_label
         window["-EXPECTED-LABEL-"].update(expected_label, visible=True)
         window["-RIGHT_COLUMN-"].update(visible=True)
 
@@ -415,6 +418,7 @@ def main_loop(labels):
     while True:
         # Check for a trigger 4x a second
         event, values = window.read(timeout=50)
+        expected_label = None
 
         # check for a timeout, send the GUI back to WAITING mode
         if (
