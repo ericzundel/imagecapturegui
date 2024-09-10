@@ -82,3 +82,42 @@ Go through the Goole Workspace and create an API key. See [Google Workspace](htt
 Getting face recognition to work is a battle of python versioning.  I used Python 3.11 on my Windows machine and tensorflow-cpu version 2.15.0 to match the version of Tensorflow on Google Colab. Since there is little control over versioning, you'll likely run into issues if you try to run a model on another machine created with Google Colab.
 
 I used the .tf format and it seemed to be compatible at the time, but not if you install Tensorflow 2.16.0!
+
+## Notes on classroom use
+
+To collect the data we used the script `facerecognition.py` To run the trained models we used `facerecognition4.py` which did a head to head comparison of 4 different student authored models.
+
+## Notes on Hill Day demo 
+
+
+Beth White and Dr Pascal Van Hentenryck took the hardware to Washington DC for Hill Day demonstration for US Congress and the NSF.  We reconfigured the hardware to have 2 hardware buttons - one to run the data collection and one to run student model. See`hill-day-demo.py`
+
+### Pinout for Hill Day Demo
+
+
+Physical Layout & Pin numbering: 
+
+Pin 2 is at the top right when looking at the Pi from the rear. USB power connections ar on the bottom and USB connector is on the right.
+
+``` `
+ 2  4  6  8 10 12 14 16 18 20 22 24 26 28 30 32 34 36 38 40
+ 1  3  5  7  9 11 13 15 17 19 21 23 25 27 29 31 33 35 37 39
+```
+
+Device Wiring based on physical layout:
+
+```
+D1  X D4  X  X  X  X  X  X  X  X  X  X  X  X  X  G1  X B2 B1
+ X D2 D3  X  X  X  X  X  X  X  X  X  X  X  X  X  X   X  X G2
+```
+
+D1: Red wire for Display : Pin 2 (5V) :  Display Power
+D2: Green wire for Display : Pin 3 (SDA) : Serial Port Data 
+D3: Yellow wire to Display : Pin 5 (SCL) : Serial Port Clock
+D4: Black wire to Display : Pin 666666 (GND)  : Ground
+
+B1: Hardware button 1: Pin 40 (GPIO 21) : Capture Data Button Sense
+G1:  Hardware button 1 Ground : Pin 39 (GND) : Capture Data Button Ground
+B2: Hardware button 2: Pin 38 (GPIO 20) : Predict Button Sense
+G2: Hardware button 2 Ground : Pin 34 (GND) : Predict Button Ground
+
