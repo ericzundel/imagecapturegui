@@ -107,17 +107,17 @@ Pin 2 is at the top right when looking at the Pi from the rear. USB power connec
 Device Wiring based on physical layout:
 
 ```
-D1  X D4  X  X  X  X  X  X  X  X  X  X  X  X  X  G1  X B2 B1
- X D2 D3  X  X  X  X  X  X  X  X  X  X  X  X  X  X   X  X G2
+D1  X D4  X  X  X  X  X  X  X  X  X  X  X  X  X  G2  X B2 B1
+ X D2 D3  X  X  X  X  X  X  X  X  X  X  X  X  X  X   X  X G1
+
+D1: Red wire for Display     : Pin 2 (5V)       : Display Power
+D2: Green wire for Display   : Pin 3 (SDA)      : Serial Port Data 
+D3: Yellow wire to Display   : Pin 5 (SCL)      : Serial Port Clock
+D4: Black wire to Display    : Pin 666666 (GND) : Ground
+
+B1: Hardware button 1        : Pin 40 (GPIO 21) : Capture Data Button Sense
+G1: Hardware button 1 Ground : Pin 39 (GND)     : Capture Data Button Ground
+B2: Hardware button 2        : Pin 38 (GPIO 20) : Predict Button Sense
+G2: Hardware button 2 Ground : Pin 34 (GND)     : Predict Button Ground
 ```
-
-D1: Red wire for Display : Pin 2 (5V) :  Display Power
-D2: Green wire for Display : Pin 3 (SDA) : Serial Port Data 
-D3: Yellow wire to Display : Pin 5 (SCL) : Serial Port Clock
-D4: Black wire to Display : Pin 666666 (GND)  : Ground
-
-B1: Hardware button 1: Pin 40 (GPIO 21) : Capture Data Button Sense
-G1:  Hardware button 1 Ground : Pin 39 (GND) : Capture Data Button Ground
-B2: Hardware button 2: Pin 38 (GPIO 20) : Predict Button Sense
-G2: Hardware button 2 Ground : Pin 34 (GND) : Predict Button Ground
 

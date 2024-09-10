@@ -439,18 +439,15 @@ def main_loop(labels):
             set_ui_state(window, "WAITING")
         # Check to see if we are to capture new images by checking the
         # proximity sensor hardware or if the button was pressed
-        if (
-            check_capture_button()
-            or check_predict_button()
-            or event == "-CAPTURE-"
-            or event == "-PREDICT-"
-        ):
+        capture_pressed = check_capture_button() or event == "-CAPTURE-"
+        predict_pressed = check_predict_button or event == "-PREDICT-"
+        if (capture_pressed or predict_pressed):
             set_ui_state(window, "CAPTURING")
             window.read(timeout=1)  # Force the window to update
             last_captured_image_time = time.monotonic()
             captured_image = None
             # For demo purposes/debugging, Try some test images
-            if event == "-PREDICT-":
+            if predict_pressed:
                 (captured_image, expected_label) = get_test_image_and_label()
             else:
                 captured_image = capture_image()
