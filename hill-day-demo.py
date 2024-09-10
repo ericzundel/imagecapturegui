@@ -571,7 +571,8 @@ def main_loop(labels):
                     "Whoops, something went wrong when retrieving element from list"
                 )
             elif last_captured_image is None:
-                sg.popup("Whoops, no images captured")
+                # sg.popup("Whoops, no images captured")
+                pass
             else:
                 # Now we can get the original object back from the json file
                 choice = choice_list[0]
