@@ -7,6 +7,7 @@ a database for a segment of machine learning.
 
 - imagecapture.py - A UI for capturing data from the Raspberry Pi camera and storing it
 - facerecognition.py - a UI for trying to recognize an image using a pre-trained model
+- hill-day-demo.py - A UI that was used for a demonstration in Washington DC that combines capture and recognition (but doesn't actually save data)
 - backup_to_google_drive.py - A job run from cron to occasionally backup captured image data
 - convert_model_to_tflite.py - A script to convert a trained model from keras to Tensorflow Lite format
 
