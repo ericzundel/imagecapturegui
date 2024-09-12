@@ -5,10 +5,10 @@ This project is a UI for a
 classroom project that captures images using OpenCV that will be used as
 a database for a segment of machine learning.
 
-imagecapture.py - A UI for capturing data from the Raspberry Pi camera and storing it
-facerecognition.py - a UI for trying to recognize an image using a pre-trained model
-backup_to_google_drive.py - A job run from cron to occasionally backup captured image data
-convert_model_to_tflite.py - A script to convert a trained model from keras to Tensorflow Lite format
+- imagecapture.py - A UI for capturing data from the Raspberry Pi camera and storing it
+- facerecognition.py - a UI for trying to recognize an image using a pre-trained model
+- backup_to_google_drive.py - A job run from cron to occasionally backup captured image data
+- convert_model_to_tflite.py - A script to convert a trained model from keras to Tensorflow Lite format
 
 
 ## Details
@@ -23,18 +23,17 @@ convert_model_to_tflite.py - A script to convert a trained model from keras to T
 
 The database of student names is stored in JSON format in a file named 'face_chioces.json' in the same directory with the script.  Here is an example of the file:
 
-```
-[
-    {
-	"first_name" : "John",
-	"last_name" : "Doe"
-    },
-    {
-	"first_name" : "Sue",
-	"last_name" : "Smith"
-    }
-]
-```
+
+    [
+      {
+	    "first_name" : "John",
+	    "last_name" : "Doe"
+      },
+      {
+	    "first_name" : "Sue",
+	    "last_name" : "Smith"
+      }
+    ]
 
 If you are not familiar with JSON format, it is used for data interchange,
 usually over a network.
@@ -65,15 +64,16 @@ OKish. In general, the sensor is not as responsive as I'd like so we substituted
 Libraries to install are in requirements.txt.  You might be able to install them with `pip install -r requirements.txt`, but each version of Raspberry Pi OS seems to be different.
 
 Raspberry Pi 4 with full image, I used:
-```
-sudo apt install python3-opencv
-python -m venv venv
-venv/bin/pip install -r requirements.txt
-```
+
+    sudo apt install python3-opencv
+    python -m venv venv
+    venv/bin/pip install -r requirements.txt
+
 
 After installing libraries, running `python imagecapture.py` should start the GUI
 
 ## Connecting to Google Drive
+
 For backing up the data to google drive, you will need to save a file named 'credentials.json'
 Go through the Goole Workspace and create an API key. See [Google Workspace](https://developers.google.com/workspace/guides/create-credentials)
 
@@ -97,24 +97,24 @@ Physical Layout & Pin numbering:
 
 Pin 2 is at the top right when looking at the Pi from the rear. USB power connections ar on the bottom and USB connector is on the right.
 
-'''
- 2  4  6  8 10 12 14 16 18 20 22 24 26 28 30 32 34 36 38 40
- 1  3  5  7  9 11 13 15 17 19 21 23 25 27 29 31 33 35 37 39
-'''
+
+   2  4  6  8 10 12 14 16 18 20 22 24 26 28 30 32 34 36 38 40
+   1  3  5  7  9 11 13 15 17 19 21 23 25 27 29 31 33 35 37 39
+
 
 Device Wiring based on physical layout:
 
-'''
-D1  X D4  X  X  X  X  X  X  X  X  X  X  X  X  X  X   X B2 B1
- X D2 D3  X  X  X  X  X  X  X  X  X  X  X  X  X  X   X  X BG 
 
-D1: Red wire for Display     : Pin 2 (5V)       : Display Power
-D2: Green wire for Display   : Pin 3 (SDA)      : Serial Port Data 
-D3: Yellow wire to Display   : Pin 5 (SCL)      : Serial Port Clock
-D4: Black wire to Display    : Pin 6 (GND) : Ground
+    D1  X D4  X  X  X  X  X  X  X  X  X  X  X  X  X  X   X B2 B1
+     X D2 D3  X  X  X  X  X  X  X  X  X  X  X  X  X  X   X  X BG 
 
-B1: Blue wire Button 1       : Pin 40 (GPIO 21) : Capture Data Button Sense
-B2: Purple wire  Button 2    : Pin 38 (GPIO 20) : Predict Button Sense
-BG: Black wire Button Ground : Pin 39 (GND)     : Capture Data Button Ground
-'''
+    D1: Red wire for Display     : Pin 2 (5V)       : Display Power
+    D2: Green wire for Display   : Pin 3 (SDA)      : Serial Port Data 
+    D3: Yellow wire to Display   : Pin 5 (SCL)      : Serial Port Clock
+    D4: Black wire to Display    : Pin 6 (GND) : Ground
+
+    B1: Blue wire Button 1       : Pin 40 (GPIO 21) : Capture Data Button Sense
+    B2: Purple wire  Button 2    : Pin 38 (GPIO 20) : Predict Button Sense
+    BG: Black wire Button Ground : Pin 39 (GND)     : Capture Data Button Ground
+
 
