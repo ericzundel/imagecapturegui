@@ -547,7 +547,7 @@ def main_loop(labels):
         predict_pressed = check_predict_button() or event == "-PREDICT-"
         if capture_pressed or predict_pressed:
             set_ui_state(window, "CAPTURING")
-            window.read(timeout=1)  # Force the window to update
+            window.read(timeout=1)  # HACK: Force the window to update
             last_captured_image_time = time.monotonic()
             captured_image = None
             # For demo purposes/debugging, Try some test images
@@ -620,7 +620,7 @@ def capture_image():
     """
 
     status, frame = camera.read()
-    # Throw away the previous frame, it might be cached
+    # HACK: Throw away the previous frame, it might be cached
     status, frame = camera.read()
 
     if not status:
