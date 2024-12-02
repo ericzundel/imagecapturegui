@@ -21,6 +21,7 @@ import platform
 import time
 import json
 import traceback
+from datetime import datetime
 
 import numpy as np
 import cv2 as cv
@@ -93,6 +94,8 @@ SMALLER_FONT = ("Any", 12)
 LIST_HEIGHT = 12  # Number of rows in listbox element
 LIST_WIDTH = 20  # Characters wide for listbox element
 FACE_CHOICES_FILE_PATH = "face_choices.json"
+NUM_IMAGES_TO_CAPTURE = 3  # Number of frames to capture from the camera
+TIME_BETWEEN_CAPTURES = 0.2  # Wait this many seconds between capturing
 
 DISPLAY_IMAGE_WIDTH = 300  # Size of image when displayed on screen
 DISPLAY_IMAGE_HEIGHT = 300
@@ -299,7 +302,11 @@ def build_window(list_values):
                     sg.Image(size=(5, 5), key="-IMAGE-", expand_x=True, expand_y=True),
                 ),
             ],
-            [sg.pin(sg.Text("", size=(18, 1), key="-EXPECTED-LABEL-", font=DEFAULT_FONT))],
+            [
+                sg.pin(
+                    sg.Text("", size=(18, 1), key="-EXPECTED-LABEL-", font=DEFAULT_FONT)
+                )
+            ],
             #  [sg.Text()],  # vertical spacer
             [sg.pin(sg.Button("Capture", key="-CAPTURE-", font=DEFAULT_FONT))],
             [sg.Button("Predict", key="-PREDICT-", font=DEFAULT_FONT)],
@@ -513,7 +520,7 @@ def main_loop(labels):
     This loop executes until someone closes the main window.
     """
 
-    last_captured_image = None
+    last_captured_images = None
     last_captured_image_time = 0
 
     while True:
@@ -537,7 +544,7 @@ def main_loop(labels):
         # If the user doesn't want to classify this image, the cancel button
         # will clear out the state.
         if event == "-CANCEL-" or event == "-CANCEL2-":
-            last_captured_image = None
+            last_captured_images = None
             last_captured_image_time = 0
             set_ui_state(window, "WAITING")
 
@@ -557,8 +564,9 @@ def main_loop(labels):
                     captured_image, labels, expected_label
                 )
             else:
-                last_captured_image = capture_image()
-                set_ui_state(window, "NAMING", image=last_captured_image)
+                last_captured_images = capture_images()
+
+                set_ui_state(window, "NAMING", image=last_captured_images[0])
 
         # if a list item is clicked on, the following code gest triggered
         if event == "-LIST-" and len(values["-LIST-"]):
@@ -573,7 +581,7 @@ def main_loop(labels):
                 sg.popup(
                     "Whoops, something went wrong when retrieving element from list"
                 )
-            elif last_captured_image is None:
+            elif last_captured_images is None:
                 # sg.popup("Whoops, no images captured")
                 pass
             else:
@@ -586,9 +594,9 @@ def main_loop(labels):
                 # if confirm_choice(choice):
                 if True:
                     # TODO(): Save the stored images to disk
-                    # save_images(last_captured_images, choice)
-                    text_to_speech("Hello, %s" % (choice["first_name"]))
-                    last_captured_image = None
+                    save_images(last_captured_images, choice)
+                    text_to_speech("Thank you for collecting and labeling your data, %s" % (choice["first_name"]))
+                    last_captured_images = None
                     last_captured_image_time = 0
                     set_ui_state(window, "WAITING")
 
@@ -613,6 +621,33 @@ def check_predict_button():
     return False
 
 
+def save_images(images, choice):
+    """Given an array of CV2 Images and a choice, save to PNG files.
+
+    Returns: None
+    """
+    first_last = "%s_%s" % (choice["first_name"], choice["last_name"])
+    directory = os.path.join("images", first_last)
+    print("Capturing images for %s in dir %s" % (format_choice(choice), directory))
+    #
+    # Call OpenCV to capture from the camera
+    #
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    count = 0
+    for image in images:
+        # Convert the image into gray format for fast caculation
+        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+        # Resizing the image to store it
+        # gray = cv.resize(gray, (400, 400))
+        # Store the image to specific label folder
+        filename = "%s/img%s-%d.png" % (directory, timestamp, count)
+        cv.imwrite(filename, gray)
+        print("Wrote %s" % (filename))
+        count = count + 1
+
+
 def capture_image():
     """Captures a single image from the camera
 
@@ -627,6 +662,27 @@ def capture_image():
         print("Frame is not been captured. Exiting...")
         raise Exception("Frame not captured. Is camera connected?")
     return frame
+
+
+def capture_images():
+    """Captures NUM_IMAGES_TO_CAPTURE from the camera
+
+    Returns: Array of image buffers
+    """
+    images = []
+    count = 0
+
+    # Important! Throw the first frame away. It's a stale buffered image
+    status, frame = camera.read()
+
+    while count < NUM_IMAGES_TO_CAPTURE:
+        count = count + 1
+        # Read returns two values one is the exit code and other is the frame
+        status, frame = camera.read()
+        images.append(capture_image())
+        if count < NUM_IMAGES_TO_CAPTURE:
+            time.sleep(TIME_BETWEEN_CAPTURES)
+    return images
 
 
 def load_labels():
@@ -666,7 +722,7 @@ def say_names(predicted_names):
     # Customize the prompt to
     if len(predicted_names) == 1:
         first_name = predicted_names[0].split(sep="_")[0]
-        text_to_speech("Hello, %s" % (first_name))
+        text_to_speech("Hello, I predict you are %s" % (first_name))
     elif len(predicted_names) == 2:
         first_name1 = predicted_names[0].split(sep="_")[0]
         first_name2 = predicted_names[1].split(sep="_")[0]
