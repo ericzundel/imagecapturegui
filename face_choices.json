@@ -42,6 +42,10 @@
 	"last_name": "Edwards"
     },
     {
+	"first_name": "Timothy",
+	"last_name": "Whitaker"
+    },
+    {
 	"first_name": "Anaysa",
 	"last_name": "Glover"
     },
@@ -90,6 +94,10 @@
 	"last_name": "Mills"
     },
     {
+	"first_name": "Thihini",
+	"last_name": "Nagendran"
+    },
+    {
 	"first_name": "Marielle",
 	"last_name": "O'Neill"
     },
@@ -112,11 +120,7 @@
     {
 	"first_name": "Titus",
 	"last_name": "Smith"
-    },
-    {
-	"first_name": "Thihini",
-	"last_name": "Nagendron"
     }
-    
+   
 
 ]
