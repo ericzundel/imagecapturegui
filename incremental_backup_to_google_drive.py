@@ -67,7 +67,7 @@ def upload_file(service, local_file_path, folder_id):
     print(f'File uploaded: {file.get("id")}')
 
     
-def fetch_files_recursively(service, folder_id, results):
+def fetch_files_recursively(service, folder_id, folder_name, results_dict):
     """
     Recursively fetch all filenames in a folder.
     :param service: Google Drive API service instance.
@@ -88,10 +88,15 @@ def fetch_files_recursively(service, folder_id, results):
             ).execute()
             
             for file in response.get('files', []):
-                results.append(file['name'])
+                results_dict[file['name']] = file
                 # If the file is a folder, recurse into it
                 if file['mimeType'] == 'application/vnd.google-apps.folder':
-                    fetch_files_recursively(service, file['id'], results)
+                    fetch_files_recursively(
+                        service,
+                        file['id'],
+                        "%s/%s" % (folder_name, file['name']),
+                        results_dict
+                    )
             
             page_token = response.get('nextPageToken', None)
             if page_token is None:
@@ -100,8 +105,12 @@ def fetch_files_recursively(service, folder_id, results):
     except HttpError as error:
         print(f"An error occurred: {error}")    
 
-def incremental_backup_to_google_drive(parent_folder_id, local_folder_path,
-                           drive_folder_name, depth=0):
+def incremental_backup_to_google_drive(parent_folder_id,
+                                       local_folder_path,
+                                       drive_folder_name, 
+                                       depth=0,
+                                       results_dict=None)
+                                       
     creds = authenticate()
     service = build("drive", "v3", credentials=creds)
 
@@ -115,12 +124,15 @@ def incremental_backup_to_google_drive(parent_folder_id, local_folder_path,
         folder_id = parent_folder_id
 
     # Fetch all existing files under the folder
-    all_files = []
-    fetch_files_recursively(service, folder_id, all_files)
+    if (results_dict is None):
+        all_files = {}
+        fetch_files_recursively(service, folder_id, all_files)
+        results_dict = all_files
+
 
     # Print all filenames
     print("Files and Folders:")
-    for filename in all_files:
+    for filename in all_files.keys():
         print(filename)
 
     return
@@ -136,43 +148,14 @@ def incremental_backup_to_google_drive(parent_folder_id, local_folder_path,
             )
             backup_to_google_drive(
                 subfolder_id, os.path.join(local_folder_path, entry.name),
-                entry.name, depth=depth+1
+                entry.name,
+                depth=depth+1,
+                results_dict=results_dict
             )
-        elif entry.is_file():
+        elif entry.is_file() and !(entry.name in results_dict):
             local_file_path = os.path.join(local_folder_path, entry.name)
             upload_file(service, local_file_path, folder_id)
     
-def backup_to_google_drive(parent_folder_id, local_folder_path,
-                           drive_folder_name, depth=0):
-    creds = authenticate()
-    service = build("drive", "v3", credentials=creds)
-
-    # Create the top level directory
-    if (depth == 0):
-        folder_id = create_folder(
-            service, drive_folder_name, parent_folder_id=parent_folder_id
-        )
-    else:
-        folder_id = parent_folder_id
-
-    # Recursively upload files from the local folder to the Google Drive folder
-    for entry in os.scandir(local_folder_path):
-        print(" got entry: %s on path %s" % (entry.name, local_folder_path))
-        if entry.name == ".":
-            pass
-        if entry.is_dir():
-            subfolder_id = create_folder(
-                service, entry.name, parent_folder_id=folder_id
-            )
-            backup_to_google_drive(
-                subfolder_id, os.path.join(local_folder_path, entry.name),
-                entry.name, depth=depth+1
-            )
-        elif entry.is_file():
-            local_file_path = os.path.join(local_folder_path, entry.name)
-            upload_file(service, local_file_path, folder_id)
-
-
 if __name__ == "__main__":
     current_datetime = datetime.now()
     parent_folder_id = PARENT_FOLDER_ID
@@ -185,5 +168,3 @@ if __name__ == "__main__":
     print("Incremental backup to %s" % (drive_incremental_folder_name))
     incremental_backup_to_google_drive(parent_folder_id, local_folder_path, drive_incremental_folder_name)
           
-    print("Full backup up %s to %s" % (local_folder_path, drive_full_folder_name))
-    backup_to_google_drive(parent_folder_id, local_folder_path, drive_full_folder_name)
