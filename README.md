@@ -119,3 +119,24 @@ Device Wiring based on physical layout:
     BG: Black wire Button Ground : Pin 39 (GND)     : Capture Data Button Ground
 
 
+### Troubleshooting
+
+#### Backup scripts
+
+
+There are two scripts used for backing up the image data. One is a full backup, the other is an incremental backup.
+
+If your backups are not working, try running `backup_to_google_drive.py` or `incremental_backup_to_google_drive.py` from the commandline and look for an error.
+
+If you get an error authenticating while running the backup scripts, you'll need to re-authenticat to google's developer API
+```
+google.auth.exceptions.RefreshError: ('invalid_grant: Bad Request', {'error': 'invalid_grant', 'error_description': 'Bad Request'})
+```
+
+
+- You'll need to be added to the list of valid developers in the Google APIs
+- Bring up Chrome logged in to your organization's email account
+- Remove the file `token.json` from the main directory where the script runs from
+- Run the script again. You'll be prompted to use the web browser to authenticate.
+- A new authentication token will be stored in `token.json`
+```
