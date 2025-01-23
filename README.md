@@ -121,6 +121,16 @@ Device Wiring based on physical layout:
 
 ### Troubleshooting
 
+#### PySimpleGUI
+
+Note that PySimpleGUI changed to a paid license model as of version 5.0. The LGPL licensed version 4.0 is 
+included in the root directory. If you are prompted with a dialog to pay for a PySimpleGUI license, 
+you may need to unintall PySimpleGUI from pip with the following command:
+
+```
+pip uninstall PySimpleGUI
+```
+
 #### Backup scripts
 
 
