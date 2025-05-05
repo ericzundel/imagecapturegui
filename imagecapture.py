@@ -15,7 +15,7 @@ from datetime import datetime
 import cv2 as cv
 import PySimpleGUI as sg
 
-from gtts import gTTS
+from gtts import gTTS, gTTSError
 
 DEFAULT_FONT = ("Any", 16)
 LIST_HEIGHT = 12  # Number of rows in listbox element
@@ -349,16 +349,19 @@ def confirm_choice(choice):
 
 
 def text_to_speech(text):
-    tts = gTTS(text=text, lang="en")
-    filename = "speech.mp3"
-    tts.save(filename)
-    platform_name = platform.system()
-    if platform_name == "Windows":
-        os.system(f"start {filename}")
-    elif platform_name == "Linux":
-        os.system(f"mplayer {filename}")
-    else:
-        print("Update script for how to play sound on %s" % platform_name)
+    try:
+        tts = gTTS(text=text, lang="en")
+        filename = "speech.mp3"
+        tts.save(filename)
+        platform_name = platform.system()
+        if platform_name == "Windows":
+            os.system(f"start {filename}")
+        elif platform_name == "Linux":
+            os.system(f"mplayer {filename}")
+        else:
+            print("Update script for how to play sound on %s" % platform_name)
+    except gTTSError:
+        print("text to speech (gTTS) unavailable. Is the network down?")
 
 
 # ###########################################################################

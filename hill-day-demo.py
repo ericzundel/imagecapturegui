@@ -28,7 +28,7 @@ import cv2 as cv
 
 # import matplotlib.pyplot as plt
 import PySimpleGUI as sg
-from gtts import gTTS
+from gtts import gTTS, gTTSError
 
 # This weird import code is so we can support both the full
 # Tensorflow library (linux, windows) and Tensorflow Lite
@@ -703,16 +703,19 @@ def confirm_choice(choice):
 
 
 def text_to_speech(text):
-    tts = gTTS(text=text, lang="en")
-    filename = "speech.mp3"
-    tts.save(filename)
-    platform_name = platform.system()
-    if platform_name == "Windows":
-        os.system(f"start {filename}")
-    elif platform_name == "Linux":
-        os.system(f"mplayer {filename}")
-    else:
-        print("Update script for how to play sound on %s" % platform_name)
+    try:
+        tts = gTTS(text=text, lang="en")
+        filename = "speech.mp3"
+        tts.save(filename)
+        platform_name = platform.system()
+        if platform_name == "Windows":
+            os.system(f"start {filename}")
+        elif platform_name == "Linux":
+            os.system(f"mplayer {filename}")
+        else:
+            print("Update script for how to play sound on %s" % platform_name)
+    except gTTSError:
+        print("text to speech (gTTS) unavailable. Is the network down?")
 
 
 def say_names(predicted_names):
