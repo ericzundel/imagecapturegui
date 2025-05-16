@@ -66,10 +66,10 @@ FACE_RECOGNITION_IMAGE_WIDTH = 100
 FACE_RECOGNITION_IMAGE_HEIGHT = 100
 
 # Local path to find the model files
-MODEL_PATHNAME_BASE = "./2024model/"
+MODEL_PATHNAME_BASE = "./2025model/"
 
 model_dict = {
-    "Rhyland's Model": "Rhyland_student_recognition_2024_32bit",
+    "Regie's Model": "regie_ingram_2025",
     "Laila's Model": "Laila_student_recognition_2024_32bit",
     "Justin B.'s Model": "Justin_Brown_student_recognition_2024_32bit",
     "Kenadie's Model": "Kenadie_student_recognition_2024_32bit",
