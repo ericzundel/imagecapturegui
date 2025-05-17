@@ -45,7 +45,7 @@ vision = None
 
 try:
     import tensorflow as tf
-   
+
     tensorflow_type = "FULL"
     print("Loaded Tensorflow Full Version")
 except ModuleNotFoundError:
@@ -154,7 +154,10 @@ def load_model():
 
     names = list(model_dict.keys())
     for name in names:
-        model_path=os.path.join(MODEL_PATHNAME_BASE, "%s.tflite" % (model_dict[name]))
+        model_path = os.path.join(
+            MODEL_PATHNAME_BASE,
+            "%s.tflite" %
+            (model_dict[name]))
         interpreter = None
         if tensorflow_type == "FULL":
             interpreter = tf.lite.Interpreter(model_path=model_path)
@@ -167,7 +170,8 @@ def load_model():
 
 def tensor_from_image(img):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT))
+    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH,
+                    FACE_RECOGNITION_IMAGE_HEIGHT))
     arr = my_img_to_arr(img) / 255.0
 
     print("Shape of array is: ")
@@ -262,12 +266,24 @@ def build_window(list_values):
             [sg.Text()],  # vertical spacer
             [
                 sg.pin(
-                    sg.Image(size=(5, 5), key="-IMAGE-", expand_x=True, expand_y=True),
+                    sg.Image(
+                        size=(
+                            5,
+                            5),
+                        key="-IMAGE-",
+                        expand_x=True,
+                        expand_y=True),
                 ),
             ],
             [
                 sg.pin(
-                    sg.Text("", size=(18, 1), key="-EXPECTED-LABEL-", font=DEFAULT_FONT)
+                    sg.Text(
+                        "",
+                        size=(
+                            18,
+                            1),
+                        key="-EXPECTED-LABEL-",
+                        font=DEFAULT_FONT)
                 )
             ],
             #  [sg.Text()],  # vertical spacer
@@ -357,7 +373,11 @@ def build_window(list_values):
         ],
         [sg.VPush()],
     ]
-    window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
+    window = sg.Window(
+        "Face Image Capture",
+        layout,
+        finalize=True,
+        resizable=True)
     # Doing this makes the app take up the whole screen
     window.maximize()
     return window
@@ -369,7 +389,8 @@ def get_selected_value(value_list):
     Returns: string with the displayed value selected in the sg.List()
     """
     if value_list is None:
-        raise Exception("Whoops, something went wrong in retrieving value from event")
+        raise Exception(
+            "Whoops, something went wrong in retrieving value from event")
     return value_list[0]
 
 
@@ -525,8 +546,8 @@ def main_loop(labels):
                 (captured_image, expected_label) = get_test_image_and_label()
 
                 # For live device, try this:
-                #captured_image = capture_image()
-                #expected_label = None
+                # captured_image = capture_image()
+                # expected_label = None
 
                 predicted_names, certainties = do_predict(
                     captured_image, labels, expected_label
@@ -563,7 +584,9 @@ def main_loop(labels):
                 if True:
                     # TODO(): Save the stored images to disk
                     save_images(last_captured_images, choice)
-                    text_to_speech("Thank you for collecting and labeling your data, %s" % (choice["first_name"]))
+                    text_to_speech(
+                        "Thank you for collecting and labeling your data, %s" %
+                        (choice["first_name"]))
                     last_captured_images = None
                     last_captured_image_time = 0
                     set_ui_state(window, "WAITING")
@@ -596,7 +619,8 @@ def save_images(images, choice):
     """
     first_last = "%s_%s" % (choice["first_name"], choice["last_name"])
     directory = os.path.join("images", first_last)
-    print("Capturing images for %s in dir %s" % (format_choice(choice), directory))
+    print("Capturing images for %s in dir %s" %
+          (format_choice(choice), directory))
     #
     # Call OpenCV to capture from the camera
     #
@@ -688,7 +712,6 @@ def text_to_speech(text):
         print("Couldn't say: %s! %s" % (text, e))
 
 
-
 def say_names(predicted_names):
     # First, uniquify the list
     predicted_names = list(set(predicted_names))
@@ -769,7 +792,8 @@ def get_test_image_and_label():
 
 
 #####
-# Load list of labels associated with the saved ML Models to display when predicting
+# Load list of labels associated with the saved ML Models to display when
+# predicting
 labels = load_labels()
 
 # Read the JSON file in with names to select for classifying
@@ -793,7 +817,8 @@ set_ui_state(window, "WAITING")
 
 
 #####################################################################
-# Initialize the Machine Learning model. This takes some time (about 20 seconds)
+# Initialize the Machine Learning model. This takes some time (about 20
+# seconds)
 load_model()
 
 try:

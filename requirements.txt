@@ -46,3 +46,5 @@ tensorflow==2.18 # For Linux
 # save format for Tensorflow models
 #pyyaml
 #h5py
+
+autopep8
