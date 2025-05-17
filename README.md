@@ -149,4 +149,12 @@ google.auth.exceptions.RefreshError: ('invalid_grant: Bad Request', {'error': 'i
 - Remove the file `token.json` from the main directory where the script runs from
 - Run the script again. You'll be prompted to use the web browser to authenticate.
 - A new authentication token will be stored in `token.json`
+
+#### Reformatting the code
+Try this:
+``` bash
+autopep8 --in-place --aggressive hill-day-demo.py
 ```
+
+#### See also
+Document on how to update this code from year to year [in Google Drive](https://docs.google.com/document/d/1y5telEn_aZy1K3CtkkxyMDz529vwP0DQExNhUIxNrys/edit?usp=sharing)

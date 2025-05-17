@@ -33,14 +33,11 @@ from gtts import gTTS, gTTSError
 # This weird import code is so we can support both the full
 # Tensorflow library (linux, windows) and Tensorflow Lite
 # (linux).
-
-# Besides the fact that it is good for testing to try both versions,
-# Currently, Google doesn't make tensorflow Lite
-# binaries available for Windows.
+# Fortunately, tensorflow lite functions seem to be
+# contained in the full tensorflow library
 
 tensorflow_type = None
 names = []
-models = []
 interpreters = []
 vision = None
 
@@ -66,24 +63,23 @@ FACE_RECOGNITION_IMAGE_WIDTH = 100
 FACE_RECOGNITION_IMAGE_HEIGHT = 100
 
 # Local path to find the model files
-MODEL_PATHNAME_BASE = "./2024model/"
+MODEL_PATHNAME_BASE = "./2025model/"
 
 model_dict = {
-    "Rhyland's Model": "Rhyland_student_recognition_2024_32bit",
-    "Laila's Model": "Laila_student_recognition_2024_32bit",
-    "Justin B.'s Model": "Justin_Brown_student_recognition_2024_32bit",
-    "Kenadie's Model": "Kenadie_student_recognition_2024_32bit",
+    "Regie's Model": "regie_ingram_2025",
+    "Jai's Model": "jai_bazawule_2025",
+    "Penny's Model": "penny_dunn_2025",
+    "Michael's Model": "michael_rashad_2025",
 }
 
 LABEL_FILENAME = "student_recognition_labels.json"
 
 # Data to be returned by get_test_image()
 test_image_db = (
-    (os.path.join(MODEL_PATHNAME_BASE, "rhyland_test.png"), "Rhyland"),
-    (os.path.join(MODEL_PATHNAME_BASE, "alexandra_test.png"), "Alexandra"),
-    (os.path.join(MODEL_PATHNAME_BASE, "donald_test.png"), "Donald"),
-    (os.path.join(MODEL_PATHNAME_BASE, "laila_test.png"), "Laila"),
-    # TODO(ericzundel): Add more images here
+    (os.path.join(MODEL_PATHNAME_BASE, "regie_test.png"), "Regie"),
+    (os.path.join(MODEL_PATHNAME_BASE, "jai_test.png"), "Jai"),
+    (os.path.join(MODEL_PATHNAME_BASE, "penny_test.png"), "Penny"),
+    (os.path.join(MODEL_PATHNAME_BASE, "michael_test.png"), "Michael"),
 )
 
 # Keep track of the last image tested so we can rotate through them.
@@ -151,38 +147,28 @@ if GPIO is not None:
 
 def load_model():
     global names
-    global models
     global interpreters
 
     names = list(model_dict.keys())
-    if tensorflow_type == "FULL":
-        print("Initializing Tensorflow Version" + tf.__version__)
-        for name in names:
-            model = tf.keras.models.load_model(
-                os.path.join(MODEL_PATHNAME_BASE, "%s.tf" % (model_dict[name]))
-            )
-            models.append(model)
-            interpreters.append(None)
-            # Sanity check the model after loading
-            # model.summary()
-
-    elif tensorflow_type == "LITE":
-        print("Initializing Tensorflow Lite")
-        for name in names:
+    for name in names:
+        model_path = os.path.join(
+            MODEL_PATHNAME_BASE,
+            "%s.tflite" %
+            (model_dict[name]))
+        interpreter = None
+        if tensorflow_type == "FULL":
+            interpreter = tf.lite.Interpreter(model_path=model_path)
+        elif tensorflow_type == "LITE":
             # Load the TFLite model
-            interpreter = tflite_runtime.Interpreter(
-                model_path=os.path.join(
-                    MODEL_PATHNAME_BASE, "%s.tflite" % (model_dict[name])
-                )
-            )
-            interpreter.allocate_tensors()
-            interpreters.append(interpreter)
-            models.append(None)
+            interpreter = tflite_runtime.Interpreter(model_path=model_path)
+        interpreter.allocate_tensors()
+        interpreters.append(interpreter)
 
 
 def tensor_from_image(img):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH, FACE_RECOGNITION_IMAGE_HEIGHT))
+    img = cv.resize(img, (FACE_RECOGNITION_IMAGE_WIDTH,
+                    FACE_RECOGNITION_IMAGE_HEIGHT))
     arr = my_img_to_arr(img) / 255.0
 
     print("Shape of array is: ")
@@ -193,8 +179,7 @@ def tensor_from_image(img):
     return arr
 
 
-def predict_lite(interpreter, tensor):
-
+def predict(interpreter, tensor):
     # Get input and output tensors.
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
@@ -215,21 +200,6 @@ def predict_lite(interpreter, tensor):
     return output_data[0]
 
 
-def predict_full(model, tensor):
-    test_tensors = np.array(tensor)
-    print("Predict: Test tensor shape")
-    print(test_tensors.shape)
-    prediction = model(np.array([tensor]))
-    return prediction[0].numpy()  # Convert from tensor to numpy
-
-
-def predict(model, interpreter, tensor):
-    if tensorflow_type == "FULL":
-        return predict_full(model, tensor)
-    elif tensorflow_type == "LITE":
-        return predict_lite(interpreter, tensor)
-
-
 def pretty_print_predictions(model_name, prediction, labels):
     print("Predicts for Model: %s" % (model_name))
     prediction_arr = prediction
@@ -242,15 +212,9 @@ def pretty_print_predictions(model_name, prediction, labels):
 
 
 def my_img_to_arr(image):
-    # return np.expand_dims(image, axis=0)
-    if tensorflow_type == "FULL":
-        return tf.keras.utils.img_to_array(image).reshape(
-            FACE_RECOGNITION_IMAGE_WIDTH * FACE_RECOGNITION_IMAGE_HEIGHT
-        )
-    elif tensorflow_type == "LITE":
-        return np.asarray(image, dtype=np.float32).reshape(
-            FACE_RECOGNITION_IMAGE_WIDTH * FACE_RECOGNITION_IMAGE_HEIGHT
-        )
+    return np.asarray(image, dtype=np.float32).reshape(
+        FACE_RECOGNITION_IMAGE_WIDTH * FACE_RECOGNITION_IMAGE_HEIGHT
+    )
 
 
 #############################################################################
@@ -299,12 +263,24 @@ def build_window(list_values):
             [sg.Text()],  # vertical spacer
             [
                 sg.pin(
-                    sg.Image(size=(5, 5), key="-IMAGE-", expand_x=True, expand_y=True),
+                    sg.Image(
+                        size=(
+                            5,
+                            5),
+                        key="-IMAGE-",
+                        expand_x=True,
+                        expand_y=True),
                 ),
             ],
             [
                 sg.pin(
-                    sg.Text("", size=(18, 1), key="-EXPECTED-LABEL-", font=DEFAULT_FONT)
+                    sg.Text(
+                        "",
+                        size=(
+                            18,
+                            1),
+                        key="-EXPECTED-LABEL-",
+                        font=DEFAULT_FONT)
                 )
             ],
             #  [sg.Text()],  # vertical spacer
@@ -394,7 +370,11 @@ def build_window(list_values):
         ],
         [sg.VPush()],
     ]
-    window = sg.Window("Face Image Capture", layout, finalize=True, resizable=True)
+    window = sg.Window(
+        "Face Image Capture",
+        layout,
+        finalize=True,
+        resizable=True)
     # Doing this makes the app take up the whole screen
     window.maximize()
     return window
@@ -406,7 +386,8 @@ def get_selected_value(value_list):
     Returns: string with the displayed value selected in the sg.List()
     """
     if value_list is None:
-        raise Exception("Whoops, something went wrong in retrieving value from event")
+        raise Exception(
+            "Whoops, something went wrong in retrieving value from event")
     return value_list[0]
 
 
@@ -557,9 +538,14 @@ def main_loop(labels):
             window.read(timeout=1)  # HACK: Force the window to update
             last_captured_image_time = time.monotonic()
             captured_image = None
-            # For demo purposes/debugging, Try some test images
             if predict_pressed:
+                # For demo purposes/debugging, Try some test images
                 (captured_image, expected_label) = get_test_image_and_label()
+
+                # For live device, try this:
+                # captured_image = capture_image()
+                # expected_label = None
+
                 predicted_names, certainties = do_predict(
                     captured_image, labels, expected_label
                 )
@@ -587,15 +573,16 @@ def main_loop(labels):
             else:
                 # Now we can get the original object back from the json file
                 choice = choice_list[0]
-                # TODO(ericzundel): Using a dialog is problematic with the Raspberry Pi
+                # Using a dialog is problematic with the Raspberry Pi
                 # Windowing System. The dialog can get stuck underneath the main window
                 # making the UI unresponsive.
-                # Eliminating the confirmation dialog for the Hill Street Demo.
+                # Commenting out this line eliminates the confirmation dialog 
                 # if confirm_choice(choice):
                 if True:
-                    # TODO(): Save the stored images to disk
                     save_images(last_captured_images, choice)
-                    text_to_speech("Thank you for collecting and labeling your data, %s" % (choice["first_name"]))
+                    text_to_speech(
+                        "Thank you for collecting and labeling your data, %s" %
+                        (choice["first_name"]))
                     last_captured_images = None
                     last_captured_image_time = 0
                     set_ui_state(window, "WAITING")
@@ -628,7 +615,8 @@ def save_images(images, choice):
     """
     first_last = "%s_%s" % (choice["first_name"], choice["last_name"])
     directory = os.path.join("images", first_last)
-    print("Capturing images for %s in dir %s" % (format_choice(choice), directory))
+    print("Capturing images for %s in dir %s" %
+          (format_choice(choice), directory))
     #
     # Call OpenCV to capture from the camera
     #
@@ -716,6 +704,8 @@ def text_to_speech(text):
             print("Update script for how to play sound on %s" % platform_name)
     except gTTSError:
         print("text to speech (gTTS) unavailable. Is the network down?")
+    except Exception as e:
+        print("Couldn't say: %s! %s" % (text, e))
 
 
 def say_names(predicted_names):
@@ -752,11 +742,8 @@ def do_predict(img, labels, expected_label):
     certainties = []
     for i in range(len(names)):
         name = names[i]
-        model = models[i]
-        interpreter = interpreters[i]
-        prediction = predict(model, interpreter, tensor)
+        prediction = predict(interpreters[i], tensor)
 
-        # import pdb; pdb.set_trace()
         pretty_print_predictions(name, prediction, labels)
 
         # Display the entry with the highest probability
@@ -800,7 +787,8 @@ def get_test_image_and_label():
 
 
 #####
-# Load list of labels associated with the saved ML Models to display when predicting
+# Load list of labels associated with the saved ML Models to display when
+# predicting
 labels = load_labels()
 
 # Read the JSON file in with names to select for classifying
@@ -824,7 +812,8 @@ set_ui_state(window, "WAITING")
 
 
 #####################################################################
-# Initialize the Machine Learning model. This takes some time (about 20 seconds)
+# Initialize the Machine Learning model. This takes some time (about 20
+# seconds)
 load_model()
 
 try:
