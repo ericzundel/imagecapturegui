@@ -540,11 +540,11 @@ def main_loop(labels):
             captured_image = None
             if predict_pressed:
                 # For demo purposes/debugging, Try some test images
-                (captured_image, expected_label) = get_test_image_and_label()
+                #(captured_image, expected_label) = get_test_image_and_label()
 
                 # For live device, try this:
-                # captured_image = capture_image()
-                # expected_label = None
+                captured_image = capture_image()
+                expected_label = None
 
                 predicted_names, certainties = do_predict(
                     captured_image, labels, expected_label
