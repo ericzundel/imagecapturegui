@@ -80,8 +80,8 @@ LABEL_FILENAME = "student_recognition_labels.json"
 test_image_db = (
     (os.path.join(MODEL_PATHNAME_BASE, "rhyland_test.png"), "Regie"),
     (os.path.join(MODEL_PATHNAME_BASE, "alexandra_test.png"), "Jai"),
-    (os.path.join(MODEL_PATHNAME_BASE, "donald_test.png"), "Justin"),
-    (os.path.join(MODEL_PATHNAME_BASE, "laila_test.png"), ""),
+    (os.path.join(MODEL_PATHNAME_BASE, "donald_test.png"), "Penny"),
+    (os.path.join(MODEL_PATHNAME_BASE, "laila_test.png"), "Michael"),
     # TODO(ericzundel): Add more images here
 )
 
@@ -746,8 +746,7 @@ def do_predict(img, labels, expected_label):
     certainties = []
     for i in range(len(names)):
         name = names[i]
-        interpreter = interpreters[i]
-        prediction = predict(interpreter, tensor)
+        prediction = predict(interpreters[i], tensor)
 
         pretty_print_predictions(name, prediction, labels)
 
