@@ -40,13 +40,12 @@ from gtts import gTTS, gTTSError
 
 tensorflow_type = None
 names = []
-models = []
 interpreters = []
 vision = None
 
 try:
     import tensorflow as tf
-
+   
     tensorflow_type = "FULL"
     print("Loaded Tensorflow Full Version")
 except ModuleNotFoundError:
@@ -70,19 +69,19 @@ MODEL_PATHNAME_BASE = "./2025model/"
 
 model_dict = {
     "Regie's Model": "regie_ingram_2025",
-    "Laila's Model": "Laila_student_recognition_2024_32bit",
-    "Justin B.'s Model": "Justin_Brown_student_recognition_2024_32bit",
-    "Kenadie's Model": "Kenadie_student_recognition_2024_32bit",
+    "Jai's Model": "jai_bazawule_2025",
+    "Penny's Model": "penny_dunn_2025",
+    "Michael's Model": "michael_rashad_2025",
 }
 
 LABEL_FILENAME = "student_recognition_labels.json"
 
 # Data to be returned by get_test_image()
 test_image_db = (
-    (os.path.join(MODEL_PATHNAME_BASE, "rhyland_test.png"), "Rhyland"),
-    (os.path.join(MODEL_PATHNAME_BASE, "alexandra_test.png"), "Alexandra"),
-    (os.path.join(MODEL_PATHNAME_BASE, "donald_test.png"), "Donald"),
-    (os.path.join(MODEL_PATHNAME_BASE, "laila_test.png"), "Laila"),
+    (os.path.join(MODEL_PATHNAME_BASE, "rhyland_test.png"), "Regie"),
+    (os.path.join(MODEL_PATHNAME_BASE, "alexandra_test.png"), "Jai"),
+    (os.path.join(MODEL_PATHNAME_BASE, "donald_test.png"), "Justin"),
+    (os.path.join(MODEL_PATHNAME_BASE, "laila_test.png"), ""),
     # TODO(ericzundel): Add more images here
 )
 
@@ -151,33 +150,19 @@ if GPIO is not None:
 
 def load_model():
     global names
-    global models
     global interpreters
 
     names = list(model_dict.keys())
-    if tensorflow_type == "FULL":
-        print("Initializing Tensorflow Version" + tf.__version__)
-        for name in names:
-            model = tf.keras.models.load_model(
-                os.path.join(MODEL_PATHNAME_BASE, "%s.tf" % (model_dict[name]))
-            )
-            models.append(model)
-            interpreters.append(None)
-            # Sanity check the model after loading
-            # model.summary()
-
-    elif tensorflow_type == "LITE":
-        print("Initializing Tensorflow Lite")
-        for name in names:
+    for name in names:
+        model_path=os.path.join(MODEL_PATHNAME_BASE, "%s.tflite" % (model_dict[name]))
+        interpreter = None
+        if tensorflow_type == "FULL":
+            interpreter = tf.lite.Interpreter(model_path=model_path)
+        elif tensorflow_type == "LITE":
             # Load the TFLite model
-            interpreter = tflite_runtime.Interpreter(
-                model_path=os.path.join(
-                    MODEL_PATHNAME_BASE, "%s.tflite" % (model_dict[name])
-                )
-            )
-            interpreter.allocate_tensors()
-            interpreters.append(interpreter)
-            models.append(None)
+            interpreter = tflite_runtime.Interpreter(model_path=model_path)
+        interpreter.allocate_tensors()
+        interpreters.append(interpreter)
 
 
 def tensor_from_image(img):
@@ -193,8 +178,7 @@ def tensor_from_image(img):
     return arr
 
 
-def predict_lite(interpreter, tensor):
-
+def predict(interpreter, tensor):
     # Get input and output tensors.
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
@@ -215,21 +199,6 @@ def predict_lite(interpreter, tensor):
     return output_data[0]
 
 
-def predict_full(model, tensor):
-    test_tensors = np.array(tensor)
-    print("Predict: Test tensor shape")
-    print(test_tensors.shape)
-    prediction = model(np.array([tensor]))
-    return prediction[0].numpy()  # Convert from tensor to numpy
-
-
-def predict(model, interpreter, tensor):
-    if tensorflow_type == "FULL":
-        return predict_full(model, tensor)
-    elif tensorflow_type == "LITE":
-        return predict_lite(interpreter, tensor)
-
-
 def pretty_print_predictions(model_name, prediction, labels):
     print("Predicts for Model: %s" % (model_name))
     prediction_arr = prediction
@@ -242,15 +211,9 @@ def pretty_print_predictions(model_name, prediction, labels):
 
 
 def my_img_to_arr(image):
-    # return np.expand_dims(image, axis=0)
-    if tensorflow_type == "FULL":
-        return tf.keras.utils.img_to_array(image).reshape(
-            FACE_RECOGNITION_IMAGE_WIDTH * FACE_RECOGNITION_IMAGE_HEIGHT
-        )
-    elif tensorflow_type == "LITE":
-        return np.asarray(image, dtype=np.float32).reshape(
-            FACE_RECOGNITION_IMAGE_WIDTH * FACE_RECOGNITION_IMAGE_HEIGHT
-        )
+    return np.asarray(image, dtype=np.float32).reshape(
+        FACE_RECOGNITION_IMAGE_WIDTH * FACE_RECOGNITION_IMAGE_HEIGHT
+    )
 
 
 #############################################################################
@@ -557,9 +520,14 @@ def main_loop(labels):
             window.read(timeout=1)  # HACK: Force the window to update
             last_captured_image_time = time.monotonic()
             captured_image = None
-            # For demo purposes/debugging, Try some test images
             if predict_pressed:
+                # For demo purposes/debugging, Try some test images
                 (captured_image, expected_label) = get_test_image_and_label()
+
+                # For live device, try this:
+                #captured_image = capture_image()
+                #expected_label = None
+
                 predicted_names, certainties = do_predict(
                     captured_image, labels, expected_label
                 )
@@ -716,6 +684,9 @@ def text_to_speech(text):
             print("Update script for how to play sound on %s" % platform_name)
     except gTTSError:
         print("text to speech (gTTS) unavailable. Is the network down?")
+    except Exception as e:
+        print("Couldn't say: %s! %s" % (text, e))
+
 
 
 def say_names(predicted_names):
@@ -752,11 +723,9 @@ def do_predict(img, labels, expected_label):
     certainties = []
     for i in range(len(names)):
         name = names[i]
-        model = models[i]
         interpreter = interpreters[i]
-        prediction = predict(model, interpreter, tensor)
+        prediction = predict(interpreter, tensor)
 
-        # import pdb; pdb.set_trace()
         pretty_print_predictions(name, prediction, labels)
 
         # Display the entry with the highest probability
