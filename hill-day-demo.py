@@ -33,10 +33,8 @@ from gtts import gTTS, gTTSError
 # This weird import code is so we can support both the full
 # Tensorflow library (linux, windows) and Tensorflow Lite
 # (linux).
-
-# Besides the fact that it is good for testing to try both versions,
-# Currently, Google doesn't make tensorflow Lite
-# binaries available for Windows.
+# Fortunately, tensorflow lite functions seem to be
+# contained in the full tensorflow library
 
 tensorflow_type = None
 names = []

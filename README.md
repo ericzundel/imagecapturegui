@@ -155,3 +155,6 @@ Try this:
 ``` bash
 autopep8 --in-place --aggressive hill-day-demo.py
 ```
+
+#### See also
+Document on how to update this code from year to year [in Google Drive](https://docs.google.com/document/d/1y5telEn_aZy1K3CtkkxyMDz529vwP0DQExNhUIxNrys/edit?usp=sharing)
