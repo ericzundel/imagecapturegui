@@ -80,7 +80,6 @@ test_image_db = (
     (os.path.join(MODEL_PATHNAME_BASE, "jai_test.png"), "Jai"),
     (os.path.join(MODEL_PATHNAME_BASE, "penny_test.png"), "Penny"),
     (os.path.join(MODEL_PATHNAME_BASE, "michael_test.png"), "Michael"),
-    # TODO(ericzundel): Add more images here
 )
 
 # Keep track of the last image tested so we can rotate through them.
@@ -574,13 +573,12 @@ def main_loop(labels):
             else:
                 # Now we can get the original object back from the json file
                 choice = choice_list[0]
-                # TODO(ericzundel): Using a dialog is problematic with the Raspberry Pi
+                # Using a dialog is problematic with the Raspberry Pi
                 # Windowing System. The dialog can get stuck underneath the main window
                 # making the UI unresponsive.
-                # Eliminating the confirmation dialog for the Hill Street Demo.
+                # Commenting out this line eliminates the confirmation dialog 
                 # if confirm_choice(choice):
                 if True:
-                    # TODO(): Save the stored images to disk
                     save_images(last_captured_images, choice)
                     text_to_speech(
                         "Thank you for collecting and labeling your data, %s" %
