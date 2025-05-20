@@ -35,6 +35,11 @@ gTTS
 
 ####
 # Tensorflow library for face recognition with trained model
+# TODO: Convert to nested requirements structure
+# https://waylonwalker.com/python-nested-requires/
+
+# Match with the version hosted in Google Collab
+tensorflow==2.18.0
 
 # You'll need to use tensorflow-cpu on Windows
 #tensorflow-cpu==2.18  # to insure compatibility with Windows, use tensorflow-cpu
